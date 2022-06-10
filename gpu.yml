@@ -1,0 +1,13 @@
+name: gpu
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - tensorflow-gpu=2.7
+  - tensorflow-probability
+  - scikit-learn
+  - matplotlib
+  - pandas
+  - cmocean
+  - cartopy
+
