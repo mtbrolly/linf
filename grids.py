@@ -25,9 +25,6 @@ class LonlatGrid():
                                         lat_vertices[..., None]), axis=2)
         self.centres = np.concatenate((lon_centres[..., None],
                                        lat_centres[..., None]), axis=2)
-        # I've changed vertices etc. from tuples of arrays to just arrays.
-        # self.vertices = (lon_vertices, lat_vertices)
-        # self.centres = (lon_centres, lat_centres)
         self.xlims = xlims
         self.ylims = ylims
         self.n_x = n_x
