@@ -46,6 +46,7 @@ def build_model(model_dir):
                 else:
                     h_layers.append(tf.keras.layers.Dense(
                         N_HU[hl_i], activation=HL_ACTIVATION,
+                        kernel_regularizer=HL_REGULARISER,
                         name='hidden_layer_{}'.format(hl_i))(h_layers[-1]))
             # Make output layer.
             l_o = tf.keras.layers.Dense(gm.params_size, use_bias=False,
