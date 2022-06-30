@@ -19,30 +19,12 @@ def prep_data(model_dir):
     NN = tf.keras.models.load_model(model_file)
     BATCH_SIZE = NN.layers[0].input_shape[0][0]
 
-    data_dir = "data/transitions/"
+    data_dir = "data/velocity_differences/"
 
-    X = np.load(data_dir + "X0_train.npy")
-    XVAL = np.load(data_dir + "X0_test.npy")
-    Y = np.load(data_dir + "DX_train.npy")
-    YVAL = np.load(data_dir + "DX_test.npy")
-
-    # Reorder data from (lat, lon) to (lon, lat) and deal with displacements
-    # which cross the dateline.
-    Xsets = [X, XVAL]
-    Ysets = [Y, YVAL]
-
-    for i, x in enumerate(Xsets):
-        temp = x[:, 1].copy()
-        x[:, 1] = x[:, 0]
-        x[:, 0] = temp
-        del temp, x
-
-    for i, y in enumerate(Ysets):
-        temp = y[:, 1].copy()
-        y[:, 1] = y[:, 0]
-        y[:, 0] = temp
-        del temp
-        y[:, 0] += (y[:, 0] < -270.) * 360. + (y[:, 0] > 270.) * (-360.)
+    X = np.load(data_dir + "r_train.npy")
+    XVAL = np.load(data_dir + "r_test.npy")
+    Y = np.load(data_dir + "du_train.npy")
+    YVAL = np.load(data_dir + "du_test.npy")
 
     # Shuffle all data.
     rng = np.random.default_rng(seed=1)
