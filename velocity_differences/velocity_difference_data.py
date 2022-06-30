@@ -57,14 +57,15 @@ delta_lt[:, 0] = np.sum(dU * dX, axis=1) / r
 delta_lt[:, 1] = (dU[:, 1] * dX[:, 0] - dU[:, 0] * dX[:, 1]) / r
 
 N_train = r.size // 2
+r = r.reshape((r.size, 1))
 np.save("data/velocity_differences/r_train.npy",
-        r[:N_train])
+        r[:N_train, :])
 np.save("data/velocity_differences/r_test.npy",
-        r[N_train:])
+        r[N_train:, :])
 np.save("data/velocity_differences/du_train.npy",
-        r[:N_train])
+        r[:N_train, :])
 np.save("data/velocity_differences/du_test.npy",
-        r[N_train:])
+        r[N_train:, :])
 
 
 # =============================================================================

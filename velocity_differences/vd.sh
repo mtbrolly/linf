@@ -2,7 +2,7 @@
 # Grid Engine options (lines prefixed with #$)
 
 # Name of job
-#$ -N eddie_0906
+#$ -N vd3006
 # Directory in which to run code (-cwd or -wd <path-to-wd>)
 #$ -wd ~/linf
 # Requested runtime allowance
@@ -26,4 +26,4 @@ module load anaconda/5.3.1
 source activate gpu
 
 # Run the program
-python transitions/do_everything.py --model_name eddie0906_l2_1em1
+python velocity_differences/do_everything.py --model_name vd3006

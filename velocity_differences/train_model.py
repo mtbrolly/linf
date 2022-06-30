@@ -34,7 +34,7 @@ def train_model(model_dir):
     METRICS = None
     LEARNING_RATE = 5e-4
     OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
-    EPOCHS = 2  # !!!
+    EPOCHS = 40  # !!!
 
     BATCHES_PER_EPOCH = int(X_.shape[0] / BATCH_SIZE)
     CHECKPOINTING = cb.ModelCheckpoint(checkpoint_model_file, monitor='loss',

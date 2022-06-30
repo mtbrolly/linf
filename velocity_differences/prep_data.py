@@ -21,10 +21,11 @@ def prep_data(model_dir):
 
     data_dir = "data/velocity_differences/"
 
-    X = np.load(data_dir + "r_train.npy")
-    XVAL = np.load(data_dir + "r_test.npy")
-    Y = np.load(data_dir + "du_train.npy")
-    YVAL = np.load(data_dir + "du_test.npy")
+    n_skip = 1
+    X = np.load(data_dir + "r_train.npy")[::n_skip, :]
+    XVAL = np.load(data_dir + "r_test.npy")[::n_skip, :]
+    Y = np.load(data_dir + "du_train.npy")[::n_skip, :]
+    YVAL = np.load(data_dir + "du_test.npy")[::n_skip, :]
 
     # Shuffle all data.
     rng = np.random.default_rng(seed=1)

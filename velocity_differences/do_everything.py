@@ -11,7 +11,7 @@ parser.add_argument('--model_name', default='current', type=str,
 args = parser.parse_args()
 
 model_name = args.model_name
-model_dir = "models/" + model_name + "/"
+model_dir = "velocity_differences/models/" + model_name + "/"
 fig_dir = model_dir + "figures/"
 
 # Create relevant directories if they do not exist.
