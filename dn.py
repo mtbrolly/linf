@@ -3,7 +3,7 @@ Module for creating density network models.
 
 Classes:
 
-    gm
+    Gm
 """
 import numpy as np
 import tensorflow as tf
