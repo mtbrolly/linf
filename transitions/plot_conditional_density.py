@@ -8,7 +8,10 @@ import cartopy
 import cartopy.crs as ccrs
 import cmocean
 import pickle
-import grids
+import sys
+import os
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+from tools import grids  # noqa: E402
 
 # model_dir = "models/eddie2004/"
 model_dir = "models/eddie0205_bs8192_lr5em4/"

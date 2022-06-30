@@ -5,7 +5,10 @@ of drifters.
 
 import tensorflow as tf
 import pickle
-from dn import Gm
+import sys
+import os
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+from dn.dn import Gm  # noqa: E402
 
 
 def build_model(model_dir):

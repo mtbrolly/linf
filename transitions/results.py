@@ -7,7 +7,10 @@ import cartopy
 import cartopy.crs as ccrs
 import cmocean
 import pickle
-import grids
+import sys
+import os
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+from tools import grids  # noqa: E402
 
 
 def results(model_dir):

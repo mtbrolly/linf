@@ -6,7 +6,10 @@ Prepare Global Drifter Program data for training.
 import tensorflow as tf
 import numpy as np
 import pickle
-from preprocessing_tools import Scaler
+import sys
+import os
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+from tools.preprocessing import Scaler  # noqa: E402
 
 
 def prep_data(model_dir):
@@ -16,7 +19,7 @@ def prep_data(model_dir):
     NN = tf.keras.models.load_model(model_file)
     BATCH_SIZE = NN.layers[0].input_shape[0][0]
 
-    data_dir = "data/drogued_drifters_data/"
+    data_dir = "../data/transitions/"
 
     X = np.load(data_dir + "X0_train.npy")
     XVAL = np.load(data_dir + "X0_test.npy")
