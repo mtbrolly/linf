@@ -1,5 +1,5 @@
 """
-Prepare data for training.
+Prepare Global Drifter Program data for training.
 """
 
 # import matplotlib.pyplot as plt

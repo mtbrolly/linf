@@ -9,11 +9,6 @@ import cmocean
 import pickle
 import grids
 
-# model_dir = "models/eddie2004/"
-# model_dir = "models/eddie2904_bs32_lr1em6/"
-# model_dir = "models/eddie0105_bs4096_lr1em4/"
-# model_dir = "models/eddie0205_bs8192_lr5em4/"
-
 
 def results(model_dir):
     tf.keras.backend.set_floatx('float64')
