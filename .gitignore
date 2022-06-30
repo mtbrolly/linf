@@ -1,0 +1,9 @@
+data/
+unused_code/
+models/
+private/
+*/models/
+figures/
+.spyproject/
+.ipynb_checkpoints/
+__pycache__/
