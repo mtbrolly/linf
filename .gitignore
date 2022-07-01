@@ -7,3 +7,4 @@ figures/
 .spyproject/
 .ipynb_checkpoints/
 __pycache__/
+nohup.out
