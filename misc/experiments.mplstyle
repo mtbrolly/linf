@@ -1,0 +1,8 @@
+font.size : 15
+text.usetex : True
+# axes.grid: True
+pcolor.shading : gouraud
+figure.figsize: 7.0, 5.0
+lines.linewidth: 2.0
+# figure.dpi : 576
+

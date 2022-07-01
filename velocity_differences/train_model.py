@@ -32,7 +32,7 @@ def train_model(model_dir):
     # Training parameters
     LOSS = gm.nll_reg
     METRICS = None
-    LEARNING_RATE = 5e-4
+    LEARNING_RATE = 5e-5
     OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
     EPOCHS = 40  # !!!
 

@@ -4,7 +4,7 @@
 # Name of job
 #$ -N vd3006
 # Directory in which to run code (-cwd or -wd <path-to-wd>)
-#$ -wd ~/linf
+#$ -wd /home/s1511699/git/linf
 # Requested runtime allowance
 #$ -l h_rt=47:59:00
 # Requested number of cores in gpu parallel environment
@@ -26,4 +26,4 @@ module load anaconda/5.3.1
 source activate gpu
 
 # Run the program
-python velocity_differences/do_everything.py --model_name vd3006
+python velocity_differences/do_everything.py --model_name vd0107

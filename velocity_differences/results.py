@@ -4,12 +4,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import pickle
 
-# model_dir = "velocity_differences/models/testVD/"
+# model_dir = "velocity_differences/models/vd_3006/"
 
 
 def results(model_dir):
     tf.keras.backend.set_floatx('float64')
-    plt.style.use('./figures/experiments.mplstyle')
+    plt.style.use('./misc/experiments.mplstyle')
     plt.ioff()
 
     figures_dir = model_dir + "figures/"

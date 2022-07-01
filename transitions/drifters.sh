@@ -4,7 +4,7 @@
 # Name of job
 #$ -N eddie_0906
 # Directory in which to run code (-cwd or -wd <path-to-wd>)
-#$ -wd ~/linf
+#$ -wd /home/s1511699/git/linf
 # Requested runtime allowance
 #$ -l h_rt=47:59:00
 # Requested number of cores in gpu parallel environment
