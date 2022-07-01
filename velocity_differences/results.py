@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import pickle
 
-# model_dir = "velocity_differences/models/vd_3006/"
+# model_dir = "velocity_differences/models/vd0107/"
 
 
 def results(model_dir):

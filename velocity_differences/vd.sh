@@ -2,7 +2,7 @@
 # Grid Engine options (lines prefixed with #$)
 
 # Name of job
-#$ -N vd3006
+#$ -N vd0107_lr5em6
 # Directory in which to run code (-cwd or -wd <path-to-wd>)
 #$ -wd /home/s1511699/git/linf
 # Requested runtime allowance
@@ -26,4 +26,4 @@ module load anaconda/5.3.1
 source activate gpu
 
 # Run the program
-python velocity_differences/do_everything.py --model_name vd0107
+python velocity_differences/do_everything.py --model_name vd0107_lr5em6

@@ -3,21 +3,40 @@ import matplotlib.pyplot as plt
 # import time
 plt.style.use('~/github/linf/figures/experiments.mplstyle')
 
-x = np.arange(0.5, 1024, 1.) / 1024 * (2 * np.pi)
-y = np.arange(0.5, 1024, 1.) / 1024 * (2 * np.pi)
+
+# Define some constants and load data.
+Nx = 1024
+Ny = 1024
+x = np.arange(0.5, Nx, 1.) / Nx * (2 * np.pi)
+y = np.arange(0.5, Ny, 1.) / Ny * (2 * np.pi)
 xx, yy = np.meshgrid(x, y)
 dx = x[1] - x[0]
 dy = y[1] - y[0]
 
-hSuuu = np.zeros(xx.shape, dtype=np.complex128)
-hSuuv = np.zeros(xx.shape, dtype=np.complex128)
-hSuvv = np.zeros(xx.shape, dtype=np.complex128)
-hSvvv = np.zeros(xx.shape, dtype=np.complex128)
+u_all = np.load(
+    "/home/s1511699/github/linf/data/velocity_differences/u_all.npy")[:2, ...]
+v_all = np.load(
+    "/home/s1511699/github/linf/data/velocity_differences/v_all.npy")[:2, ...]
+
+hSuuu = np.zeros((Ny, Nx), dtype=np.complex128)
+hSuuv = np.zeros((Ny, Nx), dtype=np.complex128)
+hSuvv = np.zeros((Ny, Nx), dtype=np.complex128)
+hSvvv = np.zeros((Ny, Nx), dtype=np.complex128)
+
+# Quantities used for angle average.
+xc = x - x.max() / 2.
+yc = y - y.max() / 2.
+
+dr = xc[1] - xc[0]
+rmax = xc.max()
+
+RR = np.sqrt((xx - x.max() / .2) ** 2 + (yy - y.max() / 2.))
+
 
 u_all = np.load(
-    "/home/s1511699/github/linf/data/sf_ml_snapshots/u_all.npy")[:2, ...]
+    "/home/s1511699/github/linf/data/velocity_differences/u_all.npy")[:2, ...]
 v_all = np.load(
-    "/home/s1511699/github/linf/data/sf_ml_snapshots/v_all.npy")[:2, ...]
+    "/home/s1511699/github/linf/data/velocity_differences/v_all.npy")[:2, ...]
 
 for t in range(len(u_all)):
     u = u_all[t, ...]
@@ -30,7 +49,7 @@ for t in range(len(u_all)):
     hvv = np.fft.fft2(v ** 2)
     huv = np.fft.fft2(u * v)
 
-    hSuuu += 3. * huu * np.conj(hu) + 3. * np.conj(huu) * hu
+    hSuuu += -3. * huu * np.conj(hu) + 3. * np.conj(huu) * hu
     hSuuv += (-2. * huv * np.conj(hu) + 2. * np.conj(huv) * hu
               - huu * np.conj(hv) + np.conj(huu) * hv)
     hSuvv += (-2. * huv * np.conj(hv) + 2. * np.conj(huv) * hv
@@ -42,10 +61,30 @@ hSuuv /= len(u_all)
 hSuvv /= len(u_all)
 hSvvv /= len(u_all)
 
-Suuu = np.real(np.fft.ifft2(hSuuu) / (1024. ** 2))
-Suuv = np.real(np.fft.ifft2(hSuuu) / (1024. ** 2))
-Suvv = np.real(np.fft.ifft2(hSuuu) / (1024. ** 2))
-Svvv = np.real(np.fft.ifft2(hSuuu) / (1024. ** 2))
+Suuu = np.real(np.fft.ifft2(hSuuu) / (Nx * Ny))
+Suuv = np.real(np.fft.ifft2(hSuuu) / (Nx * Ny))
+Suvv = np.real(np.fft.ifft2(hSuuu) / (Nx * Ny))
+Svvv = np.real(np.fft.ifft2(hSuuu) / (Nx * Ny))
+
+
+def Centre_matrix(A, Nx, Ny):
+    B = np.tile(A, (2, 2))
+    return B[int(Ny / 2): int(Ny * 3 / 2), int(Nx / 2): int(Nx * 3 / 2)]
+
+
+Suuu_cen = Centre_matrix(Suuu, Nx, Ny)
+Suuv_cen = Centre_matrix(Suuv, Nx, Ny)
+Suvv_cen = Centre_matrix(Suvv, Nx, Ny)
+Svvv_cen = Centre_matrix(Svvv, Nx, Ny)
+
+r = x
+
+plt.figure()
+plt.loglog(r[: int(Nx / 2)], Suuu_cen[int(Nx / 2), int(Nx / 2):])
+plt.loglog(r[: int(Nx / 2)], Suuv_cen[int(Nx / 2), int(Nx / 2):])
+plt.loglog(r[: int(Nx / 2)], Suvv_cen[int(Nx / 2), int(Nx / 2):])
+plt.loglog(r[: int(Nx / 2)], Svvv_cen[int(Nx / 2), int(Nx / 2):])
+plt.show()
 
 # mup2u = np.fft.irfft2(np.fft.rfft2(u ** 2) * np.conj((np.fft.rfft2(u))))
 # mupu2 = np.fft.irfft2(np.fft.rfft2(u) * np.conj((np.fft.rfft2(u ** 2))))
