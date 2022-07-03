@@ -8,6 +8,8 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('--model_name', default='current', type=str,
                     help='desired location of output file')
+parser.add_argument('--checkpoint_file', default='trained_nn', type=str,
+                    help='checkpoint from which to continue training')
 args = parser.parse_args()
 
 model_name = args.model_name
@@ -21,7 +23,11 @@ if not Path(fig_dir).exists():
     Path(fig_dir).mkdir(parents=True)
 
 
-build_model(model_dir)
-prep_data(model_dir)
-train_model(model_dir)
-results(model_dir)
+checkpoint_file = args.checkpoint_file
+
+if not checkpoint_file:
+    build_model(model_dir)
+    prep_data(model_dir)
+
+train_model(model_dir, checkpoint_file)
+results(model_dir, checkpoint_file)

@@ -5,17 +5,31 @@ import numpy as np
 import pandas as pd
 
 
-def train_model(model_dir):
+def train_model(model_dir, checkpoint_file):
     tf.keras.backend.set_floatx('float64')
 
-    untrained_model_file = model_dir + "untrained_nn"
-    checkpoint_model_file = (model_dir + "checkpoint_epoch_{epoch:02d}")
-    trained_model_file = model_dir + "trained_nn"
+    if not checkpoint_file:
+        starting_file = model_dir + "untrained_nn"
+        checkpoint_model_file = (model_dir + "checkpoint_epoch_{epoch:02d}")
+        trained_model_file = model_dir + "trained_nn"
+        log_file = "log.csv"
+        history_file = "history.csv"
+    else:
+        starting_file = model_dir + checkpoint_file
+        checkpoint_model_file = (
+            model_dir + "checkpoint_epoch_{epoch:02d}_since_"
+            + checkpoint_file)
+        trained_model_file = model_dir + "trained_from_" + checkpoint_file
+        log_file = "log_since_" + checkpoint_file + ".csv"
+        history_file = "history_since_" + checkpoint_file + ".csv"
 
     # Load neural network and Gaussian mixture layer.
-    NN = tf.keras.models.load_model(untrained_model_file)
     with open(model_dir + 'gm.pickle', 'rb') as f:
         gm = pickle.load(f)
+
+    NN = tf.keras.models.load_model(starting_file,
+                                custom_objects={'nll_reg': gm.nll_reg})
+
     gm.neural_net = NN
 
     # Load data.
@@ -32,15 +46,15 @@ def train_model(model_dir):
     # Training parameters
     LOSS = gm.nll_reg
     METRICS = None
-    LEARNING_RATE = 5e-6
+    LEARNING_RATE = 5e-8
     OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
-    EPOCHS = 40  # !!!
+    EPOCHS = 200  # !!!
 
     BATCHES_PER_EPOCH = int(X_.shape[0] / BATCH_SIZE)
     CHECKPOINTING = cb.ModelCheckpoint(checkpoint_model_file, monitor='loss',
                                        save_freq=10 * BATCHES_PER_EPOCH,
                                        verbose=1)
-    CSV_LOGGER = cb.CSVLogger(model_dir + "log.csv")
+    CSV_LOGGER = cb.CSVLogger(model_dir + log_file)
     CALLBACKS = [CHECKPOINTING, CSV_LOGGER]
 
     # Compile and train model
@@ -52,7 +66,6 @@ def train_model(model_dir):
 
     # Save training history and trained model.
     hist_df = pd.DataFrame(History.history)
-    with open(model_dir + "history.csv", mode='w') as f:
+    with open(model_dir + history_file, mode='w') as f:
         hist_df.to_csv(f)
-
     NN.save(trained_model_file)

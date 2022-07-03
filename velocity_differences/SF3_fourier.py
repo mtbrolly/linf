@@ -14,9 +14,9 @@ dx = x[1] - x[0]
 dy = y[1] - y[0]
 
 u_all = np.load(
-    "/home/s1511699/github/linf/data/velocity_differences/u_all.npy")[:2, ...]
+    "/home/s1511699/github/linf/data/velocity_differences/u_all.npy")[:20, ...]
 v_all = np.load(
-    "/home/s1511699/github/linf/data/velocity_differences/v_all.npy")[:2, ...]
+    "/home/s1511699/github/linf/data/velocity_differences/v_all.npy")[:20, ...]
 
 hSuuu = np.zeros((Ny, Nx), dtype=np.complex128)
 hSuuv = np.zeros((Ny, Nx), dtype=np.complex128)
@@ -34,9 +34,9 @@ RR = np.sqrt((xx - x.max() / .2) ** 2 + (yy - y.max() / 2.))
 
 
 u_all = np.load(
-    "/home/s1511699/github/linf/data/velocity_differences/u_all.npy")[:2, ...]
+    "/home/s1511699/github/linf/data/velocity_differences/u_all.npy")
 v_all = np.load(
-    "/home/s1511699/github/linf/data/velocity_differences/v_all.npy")[:2, ...]
+    "/home/s1511699/github/linf/data/velocity_differences/v_all.npy")
 
 for t in range(len(u_all)):
     u = u_all[t, ...]
@@ -62,9 +62,9 @@ hSuvv /= len(u_all)
 hSvvv /= len(u_all)
 
 Suuu = np.real(np.fft.ifft2(hSuuu) / (Nx * Ny))
-Suuv = np.real(np.fft.ifft2(hSuuu) / (Nx * Ny))
-Suvv = np.real(np.fft.ifft2(hSuuu) / (Nx * Ny))
-Svvv = np.real(np.fft.ifft2(hSuuu) / (Nx * Ny))
+Suuv = np.real(np.fft.ifft2(hSuuv) / (Nx * Ny))
+Suvv = np.real(np.fft.ifft2(hSuvv) / (Nx * Ny))
+Svvv = np.real(np.fft.ifft2(hSvvv) / (Nx * Ny))
 
 
 def Centre_matrix(A, Nx, Ny):
@@ -80,10 +80,67 @@ Svvv_cen = Centre_matrix(Svvv, Nx, Ny)
 r = x
 
 plt.figure()
-plt.loglog(r[: int(Nx / 2)], Suuu_cen[int(Nx / 2), int(Nx / 2):])
-plt.loglog(r[: int(Nx / 2)], Suuv_cen[int(Nx / 2), int(Nx / 2):])
-plt.loglog(r[: int(Nx / 2)], Suvv_cen[int(Nx / 2), int(Nx / 2):])
-plt.loglog(r[: int(Nx / 2)], Svvv_cen[int(Nx / 2), int(Nx / 2):])
+plt.loglog(r[: int(Nx / 2)], Suuu_cen[int(Nx / 2), int(Nx / 2):],
+           label=r'$S_{LLL}$')
+plt.loglog(r[: int(Nx / 2)], Suuv_cen[int(Nx / 2), int(Nx / 2):],
+           label=r'$S_{LLT}$')
+plt.loglog(r[: int(Nx / 2)], Suvv_cen[int(Nx / 2), int(Nx / 2):],
+           label=r'$S_{LTT}$')
+plt.loglog(r[: int(Nx / 2)], Svvv_cen[int(Nx / 2), int(Nx / 2):],
+           label=r'$S_{TTT}$')
+plt.xlabel(r'$r$')
+plt.ylabel(r'$V(x)$')
+plt.title(r'Third-order structure functions')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+plt.figure()
+plt.loglog(r[: int(Nx / 2)], -(Suuu_cen[int(Nx / 2), int(Nx / 2):] + Suvv_cen[int(Nx / 2), int(Nx / 2):]),
+           label=r'$S_{LLL}$')
+# plt.loglog(r[: int(Nx / 2)], Suuv_cen[int(Nx / 2), int(Nx / 2):],
+#            label=r'$S_{LLT}$')
+# plt.loglog(r[: int(Nx / 2)], Suvv_cen[int(Nx / 2), int(Nx / 2):],
+#            label=r'$S_{LTT}$')
+# plt.loglog(r[: int(Nx / 2)], Svvv_cen[int(Nx / 2), int(Nx / 2):],
+#            label=r'$S_{TTT}$')
+plt.xlabel(r'$r$')
+plt.ylabel(r'$V(x)$')
+plt.title(r'Third-order structure functions')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+plt.figure()
+plt.loglog(r[: int(Nx / 2)], -(Svvv_cen[int(Nx / 2), int(Nx / 2):] + Suuv_cen[int(Nx / 2), int(Nx / 2):]),
+           label=r'$S_{LLL}$')
+# plt.loglog(r[: int(Nx / 2)], Suuv_cen[int(Nx / 2), int(Nx / 2):],
+#            label=r'$S_{LLT}$')
+# plt.loglog(r[: int(Nx / 2)], Suvv_cen[int(Nx / 2), int(Nx / 2):],
+#            label=r'$S_{LTT}$')
+# plt.loglog(r[: int(Nx / 2)], Svvv_cen[int(Nx / 2), int(Nx / 2):],
+#            label=r'$S_{TTT}$')
+plt.xlabel(r'$r$')
+plt.ylabel(r'$V(x)$')
+plt.title(r'Third-order structure functions')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+plt.figure()
+plt.plot(r[: int(Nx / 2)], Suuu_cen[int(Nx / 2), int(Nx / 2):],
+         label=r'$S_{LLL}$')
+plt.plot(r[: int(Nx / 2)], Suuv_cen[int(Nx / 2), int(Nx / 2):],
+         label=r'$S_{LLT}$')
+plt.plot(r[: int(Nx / 2)], Suvv_cen[int(Nx / 2), int(Nx / 2):],
+         label=r'$S_{LTT}$')
+plt.plot(r[: int(Nx / 2)], Svvv_cen[int(Nx / 2), int(Nx / 2):],
+         label=r'$S_{TTT}$')
+plt.xlabel(r'$r$')
+plt.ylabel(r'$V(x)$')
+plt.title(r'Third-order structure functions')
+plt.legend()
+plt.tight_layout()
 plt.show()
 
 # mup2u = np.fft.irfft2(np.fft.rfft2(u ** 2) * np.conj((np.fft.rfft2(u))))
