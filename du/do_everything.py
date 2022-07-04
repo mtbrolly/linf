@@ -8,7 +8,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('--model_name', default='current', type=str,
                     help='desired location of output file')
-parser.add_argument('--checkpoint_file', default='trained_nn', type=str,
+parser.add_argument('--checkpoint_file', default=None, type=str,
                     help='checkpoint from which to continue training')
 args = parser.parse_args()
 

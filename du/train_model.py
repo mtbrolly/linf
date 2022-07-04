@@ -28,7 +28,7 @@ def train_model(model_dir, checkpoint_file):
         gm = pickle.load(f)
 
     NN = tf.keras.models.load_model(starting_file,
-                                custom_objects={'nll_reg': gm.nll_reg})
+                                    custom_objects={'nll_reg': gm.nll_reg})
 
     gm.neural_net = NN
 
@@ -46,9 +46,9 @@ def train_model(model_dir, checkpoint_file):
     # Training parameters
     LOSS = gm.nll_reg
     METRICS = None
-    LEARNING_RATE = 5e-8
+    LEARNING_RATE = 5e-4
     OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
-    EPOCHS = 200  # !!!
+    EPOCHS = 40  # !!!
 
     BATCHES_PER_EPOCH = int(X_.shape[0] / BATCH_SIZE)
     CHECKPOINTING = cb.ModelCheckpoint(checkpoint_model_file, monitor='loss',
