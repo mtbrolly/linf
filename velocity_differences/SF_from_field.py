@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-plt.style.use('~/github/linf/figures/experiments.mplstyle')
+plt.style.use('~/git/linf/figures/experiments.mplstyle')
 
 
 def sf_direct_estimation(x, y, u_all, v_all, periodic=True):
@@ -63,9 +63,9 @@ def sf_direct_estimation(x, y, u_all, v_all, periodic=True):
 x = np.arange(0.5, 1024, 1.) / 1024 * (2 * np.pi)
 y = np.arange(0.5, 1024, 1.) / 1024 * (2 * np.pi)
 # u_all = np.load(
-#     "/home/s1511699/github/linf/data/sf_ml_snapshots/u_all.npy")
+#     "/home/s1511699/git/linf/data/sf_ml_snapshots/u_all.npy")
 # v_all = np.load(
-#     "/home/s1511699/github/linf/data/sf_ml_snapshots/v_all.npy")
+#     "/home/s1511699/git/linf/data/sf_ml_snapshots/v_all.npy")
 u_all = np.load("./u_all.npy")
 v_all = np.load("./v_all.npy")
 

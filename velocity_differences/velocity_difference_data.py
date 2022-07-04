@@ -4,7 +4,7 @@ Prepare velocity difference data for training.
 
 import numpy as np
 import matplotlib.pyplot as plt
-plt.style.use('~/github/linf/figures/experiments.mplstyle')
+plt.style.use('~/git/linf/figures/experiments.mplstyle')
 
 x, y = np.meshgrid(
     np.arange(0.5, 1024, 1.) / 1024 * (2 * np.pi),
@@ -97,11 +97,11 @@ np.save("data/velocity_differences/du_test.npy",
 #     mean_l[ri] = np.mean(sample[:, 0])
 #     mean_t[ri] = np.mean(sample[:, 1])
 #
-# # np.save("/home/s1511699/github/linf/data/sf_ml_snapshots/rm.npy", rm)
-# # np.save("/home/s1511699/github/linf/data/sf_ml_snapshots/S2.npy",
+# # np.save("/home/s1511699/git/linf/data/sf_ml_snapshots/rm.npy", rm)
+# # np.save("/home/s1511699/git/linf/data/sf_ml_snapshots/S2.npy",
 # #         S2l + S2t)
-# # np.save("/home/s1511699/github/linf/data/sf_ml_snapshots/S2l.npy", S2l)
-# # np.save("/home/s1511699/github/linf/data/sf_ml_snapshots/S2t.npy", S2t)
+# # np.save("/home/s1511699/git/linf/data/sf_ml_snapshots/S2l.npy", S2l)
+# # np.save("/home/s1511699/git/linf/data/sf_ml_snapshots/S2t.npy", S2t)
 #
 #
 # plt.figure()

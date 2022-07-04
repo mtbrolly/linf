@@ -6,10 +6,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import jv as J
 from scipy.integrate import simpson
-plt.style.use('~/github/linf/figures/experiments.mplstyle')
+plt.style.use('~/git/linf/figures/experiments.mplstyle')
 
-k = np.load("/home/s1511699/github/linf/data/sf_ml_snapshots/kr.npy")
-E = np.load("/home/s1511699/github/linf/data/sf_ml_snapshots/iso_E_spec.npy")
+k = np.load("/home/s1511699/git/linf/data/sf_ml_snapshots/kr.npy")
+E = np.load("/home/s1511699/git/linf/data/sf_ml_snapshots/iso_E_spec.npy")
 
 S2 = np.zeros_like(k)
 r = 2 * np.pi / k[::-1]
@@ -22,12 +22,12 @@ def integrand(r):
 for i in range(r.size):
     S2[i] = 4 * simpson(integrand(r[i]), k)
 
-np.save("/home/s1511699/github/linf/data/sf_ml_snapshots/S2_from_E.npy", S2)
+np.save("/home/s1511699/git/linf/data/sf_ml_snapshots/S2_from_E.npy", S2)
 
 rm = np.load(
-    "/home/s1511699/github/linf/data/sf_ml_snapshots/rm.npy")
+    "/home/s1511699/git/linf/data/sf_ml_snapshots/rm.npy")
 S2_from_increments = np.load(
-    "/home/s1511699/github/linf/data/sf_ml_snapshots/S2.npy")
+    "/home/s1511699/git/linf/data/sf_ml_snapshots/S2.npy")
 
 
 plt.figure()

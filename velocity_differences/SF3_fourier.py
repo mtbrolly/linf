@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 # import time
-plt.style.use('~/github/linf/figures/experiments.mplstyle')
+plt.style.use('~/git/linf/figures/experiments.mplstyle')
 
 
 # Define some constants and load data.
@@ -14,9 +14,9 @@ dx = x[1] - x[0]
 dy = y[1] - y[0]
 
 u_all = np.load(
-    "/home/s1511699/github/linf/data/velocity_differences/u_all.npy")[:20, ...]
+    "/home/s1511699/git/linf/data/velocity_differences/u_all.npy")[:20, ...]
 v_all = np.load(
-    "/home/s1511699/github/linf/data/velocity_differences/v_all.npy")[:20, ...]
+    "/home/s1511699/git/linf/data/velocity_differences/v_all.npy")[:20, ...]
 
 hSuuu = np.zeros((Ny, Nx), dtype=np.complex128)
 hSuuv = np.zeros((Ny, Nx), dtype=np.complex128)
@@ -34,9 +34,9 @@ RR = np.sqrt((xx - x.max() / .2) ** 2 + (yy - y.max() / 2.))
 
 
 u_all = np.load(
-    "/home/s1511699/github/linf/data/velocity_differences/u_all.npy")
+    "/home/s1511699/git/linf/data/velocity_differences/u_all.npy")
 v_all = np.load(
-    "/home/s1511699/github/linf/data/velocity_differences/v_all.npy")
+    "/home/s1511699/git/linf/data/velocity_differences/v_all.npy")
 
 for t in range(len(u_all)):
     u = u_all[t, ...]

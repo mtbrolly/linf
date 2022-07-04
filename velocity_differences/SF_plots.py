@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-plt.style.use('~/github/linf/figures/experiments.mplstyle')
+plt.style.use('~/git/linf/figures/experiments.mplstyle')
 
 
 r = np.load("./r.npy")
