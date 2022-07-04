@@ -26,7 +26,7 @@ def build_model(model_dir):
     N_C = 24                                # Number of mixture components
     N_HU = [256, 256, 256, 256, 512, 512]   # Numbers of hidden units
     HL_ACTIVATION = 'relu'                  # Activation on hidden layer units
-    HL_REGULARISER = None  # H. layer weight reg.
+    HL_REGULARISER = None                   # H. layer weight reg.
 
     # Initialise Gaussian mixture "layer"
     gm = Gm(o_size=O_SIZE, n_c=N_C, scale_type='tril')
