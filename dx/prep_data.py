@@ -19,7 +19,7 @@ def prep_data(model_dir):
     NN = tf.keras.models.load_model(model_file)
     BATCH_SIZE = NN.layers[0].input_shape[0][0]
 
-    data_dir = "data/transitions/"
+    data_dir = "data/dx/"
 
     X = np.load(data_dir + "X0_train.npy")
     XVAL = np.load(data_dir + "X0_test.npy")

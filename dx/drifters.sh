@@ -26,4 +26,4 @@ module load anaconda/5.3.1
 source activate gpu
 
 # Run the program
-python transitions/do_everything.py --model_name eddie0906_l2_1em1
+python dx/do_everything.py --model_name eddie0906_l2_1em1

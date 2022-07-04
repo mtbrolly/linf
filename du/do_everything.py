@@ -13,7 +13,7 @@ parser.add_argument('--checkpoint_file', default='trained_nn', type=str,
 args = parser.parse_args()
 
 model_name = args.model_name
-model_dir = "velocity_differences/models/" + model_name + "/"
+model_dir = "du/models/" + model_name + "/"
 fig_dir = model_dir + "figures/"
 
 # Create relevant directories if they do not exist.

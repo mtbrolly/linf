@@ -10,8 +10,8 @@ x, y = np.meshgrid(
     np.arange(0.5, 1024, 1.) / 1024 * (2 * np.pi),
     np.arange(0.5, 1024, 1.) / 1024 * (2 * np.pi))
 
-u = np.load("data/velocity_differences/u_all.npy")
-v = np.load("data/velocity_differences/v_all.npy")
+u = np.load("data/du/u_all.npy")
+v = np.load("data/du/v_all.npy")
 
 
 # Create a random sample of velocity differences.
@@ -58,13 +58,13 @@ delta_lt[:, 1] = (dU[:, 1] * dX[:, 0] - dU[:, 0] * dX[:, 1]) / r
 
 N_train = r.size // 2
 r = r.reshape((r.size, 1))
-np.save("data/velocity_differences/r_train.npy",
+np.save("data/du/r_train.npy",
         r[:N_train, :])
-np.save("data/velocity_differences/r_test.npy",
+np.save("data/du/r_test.npy",
         r[N_train:, :])
-np.save("data/velocity_differences/du_train.npy",
+np.save("data/du/du_train.npy",
         r[:N_train, :])
-np.save("data/velocity_differences/du_test.npy",
+np.save("data/du/du_test.npy",
         r[N_train:, :])
 
 

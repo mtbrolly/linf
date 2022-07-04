@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import pickle
 
-# model_dir = "velocity_differences/models/vd0107_lr5em7/"
+# model_dir = "du/models/vd0107_lr5em7/"
 
 
 def results(model_dir, checkpoint_file):

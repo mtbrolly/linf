@@ -19,7 +19,7 @@ def prep_data(model_dir):
     NN = tf.keras.models.load_model(model_file)
     BATCH_SIZE = NN.layers[0].input_shape[0][0]
 
-    data_dir = "data/velocity_differences/"
+    data_dir = "data/du/"
 
     n_skip = 1
     X = np.load(data_dir + "r_train.npy")[::n_skip, :]

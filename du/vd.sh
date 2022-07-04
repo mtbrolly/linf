@@ -26,4 +26,4 @@ module load anaconda/5.3.1
 source activate gpu
 
 # Run the program
-python velocity_differences/do_everything.py --model_name vd0207_lr5em8 --checkpoint_file trained_nn
+python du/do_everything.py --model_name vd0207_lr5em8 --checkpoint_file trained_nn
