@@ -8,7 +8,7 @@ Classes:
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
-from scipy.stats import kurtosis
+from scipy.stats import skew, kurtosis
 tfd = tfp.distributions
 tf.keras.backend.set_floatx('float64')
 
@@ -207,6 +207,22 @@ class Gm():
                     tf.math.reduce_mean(-log_prob_ys, axis=0))
         return entropies
 
+    def skewness(self, x, sample_size, block_size=None):
+        if not block_size:
+            gms = self.get_gms_from_x(x)
+            ys = gms.sample((sample_size, ))
+            skewness = skew(ys, axis=0)
+        else:
+            x_size = x.shape[0]
+            skewness = np.zeros((x_size, 2))
+            for i in range(int(np.ceil(x_size / block_size))):
+                gms = self.get_gms_from_x(
+                    x[i * block_size: (i + 1) * block_size, :])
+                ys = gms.sample((sample_size, ))
+                skewness[i * block_size: (i + 1) * block_size] = (
+                    skew(ys, axis=0))
+        return skewness
+
     def kurtosis(self, x, sample_size, block_size=None):
         if not block_size:
             gms = self.get_gms_from_x(x)
@@ -223,6 +239,27 @@ class Gm():
                     kurtosis(ys, axis=0, fisher=False))
         return kurt
 
+    def S3(self, x, sample_size, block_size=None):
+        if not block_size:
+            gms = self.get_gms_from_x(x)
+            ys = gms.sample((sample_size, ))
+            S3l = tf.math.reduce_mean(ys[..., 0] ** 3, axis=0)
+            S3t = tf.math.reduce_mean(ys[..., 0] * ys[..., 1] ** 2, axis=0)
+        else:
+            x_size = x.shape[0]
+            S3l = np.zeros((x_size, 2))
+            S3t = np.zeros((x_size, 1))
+            for i in range(int(np.ceil(x_size / block_size))):
+                gms = self.get_gms_from_x(
+                    x[i * block_size: (i + 1) * block_size, :])
+                ys = gms.sample((sample_size, ))
+                S3l[i * block_size: (i + 1) * block_size] = (
+                    tf.math.reduce_mean(ys ** 3, axis=0))
+                S3t[i * block_size: (i + 1) * block_size] = (
+                    tf.math.reduce_mean(
+                        ys[..., 0:1] * ys[..., 1:2] ** 2, axis=0))
+        return S3l, S3t
+
     def density(self, x, y):
         """
         Takes x and y and returns probability density of y|x.
@@ -237,7 +274,7 @@ class Gm():
         gms = self.get_gms_from_x(x)
         return gms.log_prob(y)
 
-    def get_marginal_gms_from_gms(gms, y_ind=None):
+    def get_marginal_gms_from_gms(self, gms, y_ind):
         """
         Takes a multivariate Gaussian mixture which models y|x and y_ind (index
         of a component of y) and returns the marginal (scalar) Gaussian mixture
@@ -255,21 +292,21 @@ class Gm():
                 scale=marg_scale))
         return marginal_gms
 
-    def get_marginal_gms_from_x(self, x, y_ind=None):
+    def get_marginal_gms_from_x(self, x, y_ind):
         """
         Takes x and y_ind (index of a component of y) and returns the marginal
         (scalar) Gaussian mixture modelling y[y_ind]|x, derived from the
         multivariate Gaussian mixture which models y|x.
         """
         gms = self.get_gms_from_x(x)
-        marginal_gms = self.get_marginal_gms_from_gms(gms, y_ind=y_ind)
+        marginal_gms = self.get_marginal_gms_from_gms(gms, y_ind)
         return marginal_gms
 
-    def log_marg_density(self, x, y, y_ind=None):
+    def log_marg_density(self, x, y, y_ind):
         """
         Takes x, y and y_ind
         """
-        marginal_gms = self.get_marginal_gms_from_x(x, y_ind=y_ind)
+        marginal_gms = self.get_marginal_gms_from_x(x, y_ind)
         return marginal_gms.log_prob(y)
 
 

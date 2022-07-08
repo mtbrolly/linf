@@ -5,7 +5,7 @@ Data preprocessing tools.
 import numpy as np
 
 
-class Scaler():
+class Scaler:
     """
     Class for rescaling data, either by standardisation or normalisation.
     Includes methods for undoing the scaling for Gaussian mixture density
@@ -23,7 +23,7 @@ class Scaler():
         """
         This enforces compatibility for scalar variables.
         """
-        if type(self.min) == np.float32:
+        if type(self.min) == np.float32:  # !!!
             self.min = np.array(self.min)[None]
             self.max = np.array(self.max)[None]
             self.mean = np.array(self.mean)[None]
@@ -44,20 +44,21 @@ class Scaler():
     def invert_standardisation_cov(self, cov):
         return cov * (self.std[:, None] @ self.std[None, :])  # TODO: check.
 
-    def normalise(self, X, feature_range=(-1., 1.)):
+    def normalise(self, X, feature_range=(-1.0, 1.0)):
         self.feature_range = feature_range
-        return ((feature_range[1] - feature_range[0])
-                * (X - self.min) / (self.max - self.min) + feature_range[0])
+        return (feature_range[1] - feature_range[0]) * (X - self.min) / (
+            self.max - self.min
+        ) + feature_range[0]
 
     def invert_normalisation(self, X):
-        return ((X - self.feature_range[0])
-                / (self.feature_range[1] - self.feature_range[0])
-                * (self.max - self.min)
-                + self.min)
+        return (X - self.feature_range[0]) / (
+            self.feature_range[1] - self.feature_range[0]
+        ) * (self.max - self.min) + self.min
 
     def invert_normalisation_prob(self, prob):
-        factor = 1 / ((self.feature_range[1] - self.feature_range[0])
-                      / (self.max - self.min))
+        factor = 1 / (
+            (self.feature_range[1] - self.feature_range[0]) / (self.max - self.min)
+        )
         self.factor = factor  # TODO: check.
         return prob / factor
 
@@ -65,6 +66,7 @@ class Scaler():
         return self.invert_normalisation(loc)
 
     def invert_normalisation_cov(self, cov):
-        factor = 1 / ((self.feature_range[1] - self.feature_range[0])
-                      / (self.max - self.min))
+        factor = 1 / (
+            (self.feature_range[1] - self.feature_range[0]) / (self.max - self.min)
+        )
         return cov * (factor[:, None] @ factor[None, :])

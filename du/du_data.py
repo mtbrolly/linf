@@ -56,128 +56,126 @@ delta_lt = np.zeros_like(dU)
 delta_lt[:, 0] = np.sum(dU * dX, axis=1) / r
 delta_lt[:, 1] = (dU[:, 1] * dX[:, 0] - dU[:, 0] * dX[:, 1]) / r
 
-N_train = r.size // 2
-r = r.reshape((r.size, 1))
-np.save("data/du/r_train.npy",
-        r[:N_train, :])
-np.save("data/du/r_test.npy",
-        r[N_train:, :])
-np.save("data/du/du_train.npy",
-        r[:N_train, :])
-np.save("data/du/du_test.npy",
-        r[N_train:, :])
+# =============================================================================
+# N_train = r.size // 2
+# r = r.reshape((r.size, 1))
+# np.save("data/du/r_train.npy",
+#         r[:N_train, :])
+# np.save("data/du/r_test.npy",
+#         r[N_train:, :])
+# np.save("data/du/du_train.npy",
+#         r[:N_train, :])
+# np.save("data/du/du_test.npy",
+#         r[N_train:, :])
+# =============================================================================
+
+# Binning increments by r.
+# rs = np.logspace(-2, -0.1, 100)
+# rs = np.linspace(2. * np.pi / 200, 2. * np.pi / 3, 500)
+# rm = (rs[1:] + rs[:-1]) / 2
+
+rm = 2 * np.pi * np.arange(1, 513) / 1024
+# rm = rm[::10]
+rs = np.zeros((rm.size + 1,))
+rs[0] = 0.5 * rm[0]
+rs[1:] = rm + 0.5 * rm[0]
 
 
-# =============================================================================
-# # Binning increments by r.
-# # rs = np.logspace(-2, -0.1, 100)
-# # rs = np.linspace(2. * np.pi / 200, 2. * np.pi / 3, 500)
-# # rm = (rs[1:] + rs[:-1]) / 2
-#
-# rm = 2 * np.pi * np.arange(1, 513) / 1024
-# # rm = rm[::10]
-# rs = np.zeros((rm.size + 1,))
-# rs[0] = 0.5 * rm[0]
-# rs[1:] = rm + 0.5 * rm[0]
-#
-#
-# mean_l = np.zeros_like(rm)
-# mean_t = np.zeros_like(rm)
-# S2l = np.zeros_like(rm)
-# S2t = np.zeros_like(rm)
-# S3 = np.zeros_like(rm)
-# S2N = np.zeros_like(rm)
-# for ri in range(rm.size):
-#     sample = delta_lt[r > rs[ri], :][r[r > rs[ri]] < rs[ri + 1], :]
-#     S2l[ri] = np.var(sample[:, 0])
-#     S2t[ri] = np.var(sample[:, 1])
-#     S3[ri] = np.mean(sample[:, 0] ** 3) + np.mean(
-#         sample[:, 0] * sample[:, 1] ** 2)
-#     S2N[ri] = sample.size
-#     mean_l[ri] = np.mean(sample[:, 0])
-#     mean_t[ri] = np.mean(sample[:, 1])
-#
-# # np.save("/home/s1511699/git/linf/data/sf_ml_snapshots/rm.npy", rm)
-# # np.save("/home/s1511699/git/linf/data/sf_ml_snapshots/S2.npy",
-# #         S2l + S2t)
-# # np.save("/home/s1511699/git/linf/data/sf_ml_snapshots/S2l.npy", S2l)
-# # np.save("/home/s1511699/git/linf/data/sf_ml_snapshots/S2t.npy", S2t)
-#
-#
-# plt.figure()
-# plt.loglog(rm, S2l + S2t, 'k-')
-# plt.vlines(2 * np.pi / 64, 0.1, 0.5, 'grey', '-.',
-#            label=r'$l_f$')
-# plt.vlines(2 * np.pi / 6, 0.1, 0.5, 'grey', '--',
-#            label=r'$l_{lsf}$')
-# plt.vlines(2 * np.pi / 350, 0.1, 0.5, 'grey', ':',
-#            label=r'$l_{d}$')
-# plt.plot([0.04, 0.08], 40 * np.array([0.04, 0.08]) ** 2., 'g--',
-#          label=r'$r^{2}$')
-# plt.plot([0.11, 0.25], 1.5 * np.array([0.11, 0.25]) ** (2. / 3.), 'b--',
-#          label=r'$r^{2/3}$')
-# plt.grid(True)
-# plt.xlabel(r'$r$')
-# plt.ylabel(r'$S_2(r)$')
-# plt.title(r'Isotropic second-order structure function')
-# plt.legend()
-# plt.tight_layout()
-# plt.show()
-# # plt.savefig("./figures/S2.png", format='png', dpi=576)
-#
-# plt.figure()
-# plt.loglog(rm, S2l, 'k-', label=r'$S_2^{(L)}(r)$')
-# plt.loglog(rm, S2t, 'k-.', label=r'$S_2^{(T)}(r)$')
-# plt.vlines(2 * np.pi / 64, 4e-2, 0.5, 'grey', '-.',
-#            label=r'$l_f$')
-# plt.vlines(2 * np.pi / 6, 4e-2, 0.5, 'grey', '--',
-#            label=r'$l_{lsf}$')
-# plt.vlines(2 * np.pi / 350, 4e-2, 0.5, 'grey', ':',
-#            label=r'$l_{d}$')
-# plt.plot([0.04, 0.08], 16 * np.array([0.04, 0.08]) ** 2., 'g--',
-#          label=r'$r^{2}$')
-# plt.plot([0.11, 0.25], np.array([0.11, 0.25]) ** (1.), 'b--',
-#          label=r'$r^{1}$')
-# plt.grid(True)
-# plt.xlabel(r'$r$')
-# plt.title(r'Longitudinal and transverse second-order structure function')
-# plt.legend()
-# plt.tight_layout()
-# plt.show()
-# # plt.savefig("./figures/S2lt.png", format='png', dpi=576)
-#
-# plt.figure()
-# plt.semilogx(rm, S3 / rm, 'k-')
-# plt.vlines(2 * np.pi / 64, -0.2, 0.2, 'grey', '-.',
-#            label=r'$l_f$')
-# plt.vlines(2 * np.pi / 6, -0.2, 0.2, 'grey', '--',
-#            label=r'$l_{lsf}$')
-# plt.vlines(2 * np.pi / 350, -0.2, 0.2, 'grey', ':',
-#            label=r'$l_{d}$')
-# plt.grid(True)
-# plt.xlabel(r'$r$')
-# plt.ylabel(r'$S_3(r)/r$')
-# plt.title(r'Isotropic third-order structure function')
-# plt.legend()
-# plt.tight_layout()
-# plt.show()
-# # plt.savefig("./figures/S3_o_r.png", format='png', dpi=576)
-#
-# plt.figure()
-# plt.loglog(rm, np.abs(S3), 'k-')
-# plt.vlines(2 * np.pi / 64, -0.2, 0.2, 'grey', '-.',
-#            label=r'$l_f$')
-# plt.vlines(2 * np.pi / 6, -0.2, 0.2, 'grey', '--',
-#            label=r'$l_{lsf}$')
-# plt.vlines(2 * np.pi / 350, -0.2, 0.2, 'grey', ':',
-#            label=r'$l_{d}$')
-# plt.grid(True)
-# plt.xlabel(r'$r$')
-# plt.ylabel(r'$|S_3(r)|$')
-# plt.title(r'Isotropic third-order structure function')
-# plt.legend()
-# plt.tight_layout()
-# plt.show()
-# # plt.savefig("./figures/S3_abs.png", format='png', dpi=576)
-#
-# =============================================================================
+mean_l = np.zeros_like(rm)
+mean_t = np.zeros_like(rm)
+S2l = np.zeros_like(rm)
+S2t = np.zeros_like(rm)
+S3 = np.zeros_like(rm)
+S2N = np.zeros_like(rm)
+for ri in range(rm.size):
+    sample = delta_lt[r > rs[ri], :][r[r > rs[ri]] < rs[ri + 1], :]
+    S2l[ri] = np.var(sample[:, 0])
+    S2t[ri] = np.var(sample[:, 1])
+    S3[ri] = np.mean(sample[:, 0] ** 3) + np.mean(
+        sample[:, 0] * sample[:, 1] ** 2)
+    S2N[ri] = sample.size
+    mean_l[ri] = np.mean(sample[:, 0])
+    mean_t[ri] = np.mean(sample[:, 1])
+
+# np.save("/home/s1511699/git/linf/data/du/real_binned_estimates/r.npy", r)
+# np.save("/home/s1511699/git/linf/data/du/real_binned_estimates/S2.npy",
+#         S2l + S2t)
+# np.save("/home/s1511699/git/linf/data/du/real_binned_estimates/S2l.npy", S2l)
+# np.save("/home/s1511699/git/linf/data/du/real_binned_estimates/S2t.npy", S2t)
+
+
+plt.figure()
+plt.loglog(rm, S2l + S2t, 'k-')
+plt.vlines(2 * np.pi / 64, 0.1, 0.5, 'grey', '-.',
+           label=r'$l_f$')
+plt.vlines(2 * np.pi / 6, 0.1, 0.5, 'grey', '--',
+           label=r'$l_{lsf}$')
+plt.vlines(2 * np.pi / 350, 0.1, 0.5, 'grey', ':',
+           label=r'$l_{d}$')
+plt.plot([0.04, 0.08], 40 * np.array([0.04, 0.08]) ** 2., 'g--',
+         label=r'$r^{2}$')
+plt.plot([0.11, 0.25], 1.5 * np.array([0.11, 0.25]) ** (2. / 3.), 'b--',
+         label=r'$r^{2/3}$')
+plt.grid(True)
+plt.xlabel(r'$r$')
+plt.ylabel(r'$S_2(r)$')
+plt.title(r'Isotropic second-order structure function')
+plt.legend()
+plt.tight_layout()
+plt.show()
+# plt.savefig("./figures/real_binned_estimates/S2.png", format='png', dpi=576)
+
+plt.figure()
+plt.loglog(rm, S2l, 'k-', label=r'$S_2^{(L)}(r)$')
+plt.loglog(rm, S2t, 'k-.', label=r'$S_2^{(T)}(r)$')
+plt.vlines(2 * np.pi / 64, 4e-2, 0.5, 'grey', '-.',
+           label=r'$l_f$')
+plt.vlines(2 * np.pi / 6, 4e-2, 0.5, 'grey', '--',
+           label=r'$l_{lsf}$')
+plt.vlines(2 * np.pi / 350, 4e-2, 0.5, 'grey', ':',
+           label=r'$l_{d}$')
+plt.plot([0.04, 0.08], 16 * np.array([0.04, 0.08]) ** 2., 'g--',
+         label=r'$r^{2}$')
+plt.plot([0.11, 0.25], np.array([0.11, 0.25]) ** (1.), 'b--',
+         label=r'$r^{1}$')
+plt.grid(True)
+plt.xlabel(r'$r$')
+plt.title(r'Longitudinal and transverse second-order structure function')
+plt.legend()
+plt.tight_layout()
+plt.show()
+# plt.savefig("./figures/S2lt.png", format='png', dpi=576)
+
+plt.figure()
+plt.semilogx(rm, S3 / rm, 'k-')
+plt.vlines(2 * np.pi / 64, -0.2, 0.2, 'grey', '-.',
+           label=r'$l_f$')
+plt.vlines(2 * np.pi / 6, -0.2, 0.2, 'grey', '--',
+           label=r'$l_{lsf}$')
+plt.vlines(2 * np.pi / 350, -0.2, 0.2, 'grey', ':',
+           label=r'$l_{d}$')
+plt.grid(True)
+plt.xlabel(r'$r$')
+plt.ylabel(r'$S_3(r)/r$')
+plt.title(r'Isotropic third-order structure function')
+plt.legend()
+plt.tight_layout()
+plt.show()
+# plt.savefig("./figures/S3_o_r.png", format='png', dpi=576)
+
+plt.figure()
+plt.loglog(rm, np.abs(S3), 'k-')
+plt.vlines(2 * np.pi / 64, -0.2, 0.2, 'grey', '-.',
+           label=r'$l_f$')
+plt.vlines(2 * np.pi / 6, -0.2, 0.2, 'grey', '--',
+           label=r'$l_{lsf}$')
+plt.vlines(2 * np.pi / 350, -0.2, 0.2, 'grey', ':',
+           label=r'$l_{d}$')
+plt.grid(True)
+plt.xlabel(r'$r$')
+plt.ylabel(r'$|S_3(r)|$')
+plt.title(r'Isotropic third-order structure function')
+plt.legend()
+plt.tight_layout()
+plt.show()
+# plt.savefig("./figures/S3_abs.png", format='png', dpi=576)

@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-# import time
 plt.style.use('~/git/linf/figures/experiments.mplstyle')
 
 
@@ -14,29 +13,14 @@ dx = x[1] - x[0]
 dy = y[1] - y[0]
 
 u_all = np.load(
-    "/home/s1511699/git/linf/data/du/u_all.npy")[:20, ...]
+    "/home/s1511699/git/linf/data/du/u_some.npy")
 v_all = np.load(
-    "/home/s1511699/git/linf/data/du/v_all.npy")[:20, ...]
+    "/home/s1511699/git/linf/data/du/v_some.npy")
 
 hSuuu = np.zeros((Ny, Nx), dtype=np.complex128)
 hSuuv = np.zeros((Ny, Nx), dtype=np.complex128)
 hSuvv = np.zeros((Ny, Nx), dtype=np.complex128)
 hSvvv = np.zeros((Ny, Nx), dtype=np.complex128)
-
-# Quantities used for angle average.
-xc = x - x.max() / 2.
-yc = y - y.max() / 2.
-
-dr = xc[1] - xc[0]
-rmax = xc.max()
-
-RR = np.sqrt((xx - x.max() / .2) ** 2 + (yy - y.max() / 2.))
-
-
-u_all = np.load(
-    "/home/s1511699/git/linf/data/du/u_all.npy")
-v_all = np.load(
-    "/home/s1511699/git/linf/data/du/v_all.npy")
 
 for t in range(len(u_all)):
     u = u_all[t, ...]
@@ -79,14 +63,15 @@ Svvv_cen = Centre_matrix(Svvv, Nx, Ny)
 
 r = x
 
+
 plt.figure()
-plt.loglog(r[: int(Nx / 2)], Suuu_cen[int(Nx / 2), int(Nx / 2):],
+plt.loglog(r[: int(Nx / 2)], -Suuu_cen[int(Nx / 2), int(Nx / 2):],
            label=r'$S_{LLL}$')
-plt.loglog(r[: int(Nx / 2)], Suuv_cen[int(Nx / 2), int(Nx / 2):],
+plt.loglog(r[: int(Nx / 2)], -Suuv_cen[int(Nx / 2), int(Nx / 2):],
            label=r'$S_{LLT}$')
-plt.loglog(r[: int(Nx / 2)], Suvv_cen[int(Nx / 2), int(Nx / 2):],
+plt.loglog(r[: int(Nx / 2)], -Suvv_cen[int(Nx / 2), int(Nx / 2):],
            label=r'$S_{LTT}$')
-plt.loglog(r[: int(Nx / 2)], Svvv_cen[int(Nx / 2), int(Nx / 2):],
+plt.loglog(r[: int(Nx / 2)], -Svvv_cen[int(Nx / 2), int(Nx / 2):],
            label=r'$S_{TTT}$')
 plt.xlabel(r'$r$')
 plt.ylabel(r'$V(x)$')
@@ -95,15 +80,50 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 
+
 plt.figure()
-plt.loglog(r[: int(Nx / 2)], -(Suuu_cen[int(Nx / 2), int(Nx / 2):] + Suvv_cen[int(Nx / 2), int(Nx / 2):]),
-           label=r'$S_{LLL}$')
-# plt.loglog(r[: int(Nx / 2)], Suuv_cen[int(Nx / 2), int(Nx / 2):],
-#            label=r'$S_{LLT}$')
-# plt.loglog(r[: int(Nx / 2)], Suvv_cen[int(Nx / 2), int(Nx / 2):],
-#            label=r'$S_{LTT}$')
-# plt.loglog(r[: int(Nx / 2)], Svvv_cen[int(Nx / 2), int(Nx / 2):],
-#            label=r'$S_{TTT}$')
+plt.loglog(r[: int(Nx / 2)],
+           (-(Suuu_cen[int(Nx / 2), int(Nx / 2):]
+              + Suvv_cen[int(Nx / 2), int(Nx / 2):])),
+           label=r'$V(r)$')
+plt.loglog(r[: int(Nx / 2)],
+           (-(Suuu_cen[int(Nx / 2), int(Nx / 2):])),
+           label=r'$S_L(r)$')
+plt.loglog(r[: int(Nx / 2)],
+           (-(Suvv_cen[int(Nx / 2), int(Nx / 2):])),
+           label=r'$S_T(r)$')
+plt.loglog(r[: int(Nx / 2)], r[: int(Nx / 2)] ** 3., '--',
+           label=r'$r^3$')
+plt.loglog(r[: int(Nx / 2)], r[: int(Nx / 2)] ** 1., '--',
+           label=r'$r^1$')
+plt.xlabel(r'$r$')
+plt.legend()
+plt.title(r'Third-order structure functions')
+plt.tight_layout()
+plt.show()
+
+plt.figure()
+plt.loglog(r[: int(Nx / 2)],
+           ((Suuu_cen[int(Nx / 2), int(Nx / 2):]
+             + Suvv_cen[int(Nx / 2), int(Nx / 2):])),
+           label=r'$V(r)$')
+plt.loglog(r[: int(Nx / 2)],
+           ((Suuu_cen[int(Nx / 2), int(Nx / 2):])),
+           label=r'$S_L(r)$')
+plt.loglog(r[: int(Nx / 2)],
+           ((Suvv_cen[int(Nx / 2), int(Nx / 2):])),
+           label=r'$S_T(r)$')
+plt.xlabel(r'$r$')
+plt.legend()
+plt.title(r'Third-order structure functions')
+plt.tight_layout()
+plt.show()
+
+plt.figure()
+plt.loglog(r[: int(Nx / 2)],
+           (-(Svvv_cen[int(Nx / 2), int(Nx / 2):]
+              + Suuv_cen[int(Nx / 2), int(Nx / 2):])),
+           label=r'$S_{TTT} + S_{LLT}$')
 plt.xlabel(r'$r$')
 plt.ylabel(r'$V(x)$')
 plt.title(r'Third-order structure functions')
@@ -111,21 +131,6 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 
-plt.figure()
-plt.loglog(r[: int(Nx / 2)], -(Svvv_cen[int(Nx / 2), int(Nx / 2):] + Suuv_cen[int(Nx / 2), int(Nx / 2):]),
-           label=r'$S_{LLL}$')
-# plt.loglog(r[: int(Nx / 2)], Suuv_cen[int(Nx / 2), int(Nx / 2):],
-#            label=r'$S_{LLT}$')
-# plt.loglog(r[: int(Nx / 2)], Suvv_cen[int(Nx / 2), int(Nx / 2):],
-#            label=r'$S_{LTT}$')
-# plt.loglog(r[: int(Nx / 2)], Svvv_cen[int(Nx / 2), int(Nx / 2):],
-#            label=r'$S_{TTT}$')
-plt.xlabel(r'$r$')
-plt.ylabel(r'$V(x)$')
-plt.title(r'Third-order structure functions')
-plt.legend()
-plt.tight_layout()
-plt.show()
 
 plt.figure()
 plt.plot(r[: int(Nx / 2)], Suuu_cen[int(Nx / 2), int(Nx / 2):],
@@ -142,53 +147,3 @@ plt.title(r'Third-order structure functions')
 plt.legend()
 plt.tight_layout()
 plt.show()
-
-# mup2u = np.fft.irfft2(np.fft.rfft2(u ** 2) * np.conj((np.fft.rfft2(u))))
-# mupu2 = np.fft.irfft2(np.fft.rfft2(u) * np.conj((np.fft.rfft2(u ** 2))))
-# mdu3 = -3. * mup2u + 3. * mupu2
-# r_xy = np.sqrt(xx ** 2 + yy ** 2)
-# dr = np.sqrt(dx ** 2 + dy ** 2)
-# r = np.arange(dr / 2., np.pi + dr, dr)
-
-# mdu3r = np.zeros(r.size)
-
-# for i in range(r.size):
-#     fr = (r_xy >= r[i] - dr / 2) & (r_xy <= r[i] + dr / 2)
-#     mdu3r[i] = mdu3[fr].mean() * 2 * np.pi * r[i] * dr / 1024
-
-# plt.figure()
-# plt.loglog(r, np.abs(mdu3r), 'k')
-# plt.show()
-
-# =============================================================================
-# for i in range(kr.size):
-#     fkr = (model.wv >= kr[i] - dkr / 2) & (model.wv <= kr[i] + dkr / 2)
-#     dtk = pi / (fkr.sum() - 1)
-#     spec_iso[i] = spec2D[fkr].sum() * kr[i] * dtk
-# =============================================================================
-
-# =============================================================================
-# r = x[1: int(len(u) / 2)] - x[0]
-# SF3l = np.zeros(np.shape(r))
-# SF3t = np.zeros(np.shape(r))
-#
-# for i in range(len(r)):
-#     print(i)
-#     t0 = time.time()
-#     up = np.roll(u, -(i + 1), axis=0)
-#     up2 = up ** 2
-#     up2h = np.fft.rfft2(up2)
-#     uhc = np.conj(np.fft.rfft2(u))
-#     mup2u = np.mean(np.fft.irfft2(up2h * uhc))
-#     u2hc = np.conj(np.fft.rfft2(u ** 2))
-#     uph = np.fft.rfft2(up)
-#     mupu2 = np.mean(np.fft.irfft2(uph * u2hc))
-#
-#     SF3l[i] = -3. * mup2u + 3 * mupu2
-#     T = time.time() - t0
-#     # print(f'Time taken: {T:.1f} seconds.')
-#
-# plt.figure()
-# plt.plot(r, SF3l, 'k')
-# plt.show()
-# =============================================================================

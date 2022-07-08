@@ -8,16 +8,19 @@ import numpy as np
 import pickle
 import sys
 import os
+from tfp_build_model import build_model
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from tools.preprocessing import Scaler  # noqa: E402
+
+model_name = 'test_tfp'
+model_dir = "du/models/" + model_name + "/"
 
 
 def prep_data(model_dir):
     tf.keras.backend.set_floatx('float64')
 
-    model_file = model_dir + "untrained_nn"
-    NN = tf.keras.models.load_model(model_file)
-    BATCH_SIZE = NN.layers[0].input_shape[0][0]
+    MDN = build_model(model_dir)
+    BATCH_SIZE = MDN.layers[0].input_shape[0][0]
 
     data_dir = "data/du/"
 
@@ -45,14 +48,7 @@ def prep_data(model_dir):
 
     # Standardise data.
     Xscaler = Scaler(X)
-    # X_ = Xscaler.standardise(X)
-    # X_VAL = Xscaler.standardise(XVAL)
     Yscaler = Scaler(Y)
-    # Y_ = Yscaler.standardise(Y)
-    # Y_VAL = Yscaler.standardise(YVAL)
-
-    # datas = [X, X_, XVAL, X_VAL, Y, Y_, YVAL, Y_VAL]
-    # datas_str = ["X", "X_", "XVAL", "X_VAL", "Y", "Y_", "YVAL", "Y_VAL"]
     datas = [X, XVAL, Y, YVAL]
     datas_str = ["X", "XVAL", "Y", "YVAL"]
     for i, data in enumerate(datas):
