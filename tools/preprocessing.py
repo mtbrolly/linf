@@ -57,7 +57,8 @@ class Scaler:
 
     def invert_normalisation_prob(self, prob):
         factor = 1 / (
-            (self.feature_range[1] - self.feature_range[0]) / (self.max - self.min)
+            (self.feature_range[1] - self.feature_range[0])
+            / (self.max - self.min)
         )
         self.factor = factor  # TODO: check.
         return prob / factor
@@ -67,6 +68,7 @@ class Scaler:
 
     def invert_normalisation_cov(self, cov):
         factor = 1 / (
-            (self.feature_range[1] - self.feature_range[0]) / (self.max - self.min)
+            (self.feature_range[1] - self.feature_range[0])
+            / (self.max - self.min)
         )
         return cov * (factor[:, None] @ factor[None, :])

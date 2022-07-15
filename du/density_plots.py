@@ -11,7 +11,7 @@ def results(model_dir):
     plt.style.use("./misc/experiments.mplstyle")
     plt.ioff()
 
-    figures_dir = model_dir + "figures/"
+    # figures_dir = model_dir + "figures/"
     # trained_model_file = model_dir + "checkpoint_epoch_10"
     trained_model_file = model_dir + "trained_nn"
 
@@ -47,13 +47,15 @@ def results(model_dir):
         dul = dul_n * cov[r, 0, 0] ** 0.5
         pdul = (
             Yscaler.invert_standardisation_prob(
-                gm.log_marg_density(Xscaler.standardise(rs[r, :]), dul, 0).numpy()
+                gm.log_marg_density(
+                    Xscaler.standardise(rs[r, :]), dul, 0).numpy()
             )
             * cov[r, 0, 0] ** 0.5
         )
         plt.plot(dul, pdul, color=c[r], label=rf"$r = 2\pi/{rks[r, 0]:.0f}$")
     plt.plot(
-        dul_n, -0.5 * np.log(2 * np.pi) - 0.5 * dul_n**2, "k--", label=r"Gaussian"
+        dul_n, -0.5 * np.log(2 * np.pi) - 0.5 * dul_n**2, "k--",
+        label=r"Gaussian"
     )
     plt.xlabel(r"$\delta u_L / \sigma_{\delta u_L | r}$")
     plt.ylabel(r"$\ln p(\delta u_L  / \sigma_{\delta u_L | r}| r)$")
@@ -70,14 +72,15 @@ def results(model_dir):
         dut = dul_n * cov[r, 1, 1] ** 0.5
         pdut = (
             Yscaler.invert_standardisation_prob(
-                gm.log_marg_density(Xscaler.standardise(rs[r, :]), dul, 0).numpy()
+                gm.log_marg_density
+                (Xscaler.standardise(rs[r, :]), dul, 0
+                 ).numpy()
             )
             * cov[r, 1, 1] ** 0.5
         )
         plt.plot(dut, pdut, color=c[r], label=rf"$r = 2\pi/{rks[r, 0]:.0f}$")
-    plt.plot(
-        dul_n, -0.5 * np.log(2 * np.pi) - 0.5 * dul_n**2, "k--", label=r"Gaussian"
-    )
+    plt.plot(dul_n, -0.5 * np.log(2 * np.pi) - 0.5 * dul_n**2, "k--",
+             label=r"Gaussian")
     plt.xlabel(r"$\delta u_T / \sigma_{\delta u_T | r}$")
     plt.ylabel(r"$\ln p(\delta u_T  / \sigma_{\delta u_T | r}| r)$")
     plt.xlim(-7.5, 7.5)

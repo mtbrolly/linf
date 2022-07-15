@@ -1,8 +1,8 @@
 import tensorflow as tf
-import numpy as np
+# import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
+# import matplotlib.colors as colors
 import cartopy
 import cartopy.crs as ccrs
 import cmocean
@@ -11,6 +11,8 @@ import sys
 import os
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from tools import grids  # noqa: E402
+
+# model_dir = "/home/s1511699/git/linf/dx/models/eddie0205_bs8192_lr5em4/"
 
 
 def results(model_dir):
@@ -84,7 +86,8 @@ def results(model_dir):
 
     # entropies = grid.eval_on_grid(entropy, scaler=Xscaler.standardise)
     # Gaussian_entropy = 0.5 * np.log((2 * np.pi * np.exp(1)) ** 2 *
-    #                                 (cov_scaled[:, 0, 0] * cov_scaled[:, 1, 1]
+    #                                 (cov_scaled[:, 0, 0]
+    #                                  * cov_scaled[:, 1, 1]
     #                                  - cov_scaled[:, 0, 1] ** 2))
     # excess_entropies = entropies - Gaussian_entropy
 
