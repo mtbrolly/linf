@@ -7,10 +7,6 @@ from tfp_build_model import build_model
 
 
 def train_model(model_dir):
-    """
-    TODO:
-        - Make a save_weights() equivalent of checkpointing.
-    """
 
     tf.keras.backend.set_floatx('float64')
     checkpoint_model_file = (
@@ -54,7 +50,7 @@ def train_model(model_dir):
     METRICS = None
     LEARNING_RATE = 5e-4  # !!!
     OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
-    EPOCHS = 2  # !!!
+    EPOCHS = 100  # !!!
 
     BATCHES_PER_EPOCH = int(X_.shape[0] / BATCH_SIZE)
     CHECKPOINTING = cb.ModelCheckpoint(checkpoint_model_file, monitor='loss',
