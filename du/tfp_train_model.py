@@ -7,7 +7,8 @@ from tfp_build_model import build_model
 
 
 def train_model(model_dir):
-
+    tf.data.Options().experimental_distribute.auto_shard_policy = (
+        tf.data.experimental.AutoShardPolicy.DATA)
     tf.keras.backend.set_floatx('float64')
     checkpoint_model_file = (
         model_dir + "checkpoint_epoch_{epoch:02d}/weights")
@@ -50,7 +51,7 @@ def train_model(model_dir):
     METRICS = None
     LEARNING_RATE = 5e-4  # !!!
     OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
-    EPOCHS = 100  # !!!
+    EPOCHS = 50  # !!!
 
     BATCHES_PER_EPOCH = int(X_.shape[0] / BATCH_SIZE)
     CHECKPOINTING = cb.ModelCheckpoint(checkpoint_model_file, monitor='loss',
@@ -66,7 +67,7 @@ def train_model(model_dir):
     History = MDN.fit(X_, Y_, initial_epoch=0, epochs=EPOCHS,
                       callbacks=CALLBACKS, batch_size=BATCH_SIZE,
                       validation_data=[XVAL_, YVAL_],
-                      verbose=1)
+                      verbose=2)
 
     # Save training history and trained model.
     hist_df = pd.DataFrame(History.history)

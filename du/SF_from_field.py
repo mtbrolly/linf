@@ -89,19 +89,24 @@ dul_all = dul_all.flatten()
 dut_all = dut_all.flatten()
 du_all = np.concatenate((dul_all[:, None], dut_all[:, None]), axis=1)
 
-r_all_sub = r_all[r_all < 2. * np.pi / 16.]
-du_all_sub = du_all[(r_all < 2. * np.pi / 16.)[:, 0], :]
 
-# N_train = r_all_sub.size // 2
-# r_all_sub = r_all_sub.reshape((r_all_sub.size, 1))
+# Shuffle data randomly.
+shuffler_rng = np.random.default_rng(seed=1)
+shuffled_index = shuffler_rng.permutation(np.arange(r_all.size))
+r_all = r_all[shuffled_index, ...]
+du_all = du_all[shuffled_index, ...]
+
+# N_train = r_all.size // 2
+# r_all = r_all.reshape((r_all.size, 1))
 # np.save("data/du/r_train.npy",
-#         r_all_sub[:N_train, :])
+#         r_all[:N_train, :])
 # np.save("data/du/r_test.npy",
-#         r_all_sub[N_train:, :])
+#         r_all[N_train:, :])
 # np.save("data/du/du_train.npy",
-#         du_all_sub[:N_train, :])
+#         du_all[:N_train, :])
 # np.save("data/du/du_test.npy",
-#         du_all_sub[N_train:, :])
+#         du_all[N_train:, :])
+
 
 # results_dir = (
 #     "/home/s1511699/git/linf/data/du/SF_from_field_1/")
