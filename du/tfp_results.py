@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 import pickle
 from du.tfp_build_model import build_model
 
-model_dir = "du/models/du_iso_1907/"
-checkpoint_file = "checkpoint_epoch_46"
+model_dir = "du/models/du_iso_2007_32768/"
+checkpoint_file = "checkpoint_epoch_50"
 
 
 def results(model_dir, checkpoint_file):
     tf.keras.backend.set_floatx('float64')
     plt.style.use('./misc/experiments.mplstyle')
-    plt.ioff()
+    # plt.ioff()
 
     figures_dir = model_dir + "figures/"
 
@@ -45,7 +45,7 @@ def results(model_dir, checkpoint_file):
     plt.grid()
     plt.tight_layout()
     plt.savefig(figures_dir + "loss.png", dpi=576)
-    plt.close()
+    # plt.close()
 
     r_train = np.load(model_dir + "X.npy")
     # r = np.linspace(r_train.min(), r_train.max(), 1000).reshape((-1, 1))
@@ -103,7 +103,7 @@ def results(model_dir, checkpoint_file):
     plt.xscale('log')
     plt.yscale('log')
     plt.tight_layout()
-    # plt.savefig(figures_dir + "S2_loglog.png", dpi=576)
+    plt.savefig(figures_dir + "S2_loglog.png", dpi=576)
     # plt.close()
 
     # plt.figure()
