@@ -11,4 +11,4 @@
 source /work/sc073/sc073/mbrolly/.bashrc
 conda activate tf
 
-python du/tfp_do_everything.py --model_name du_iso_2007
+python du/tfp_do_everything.py --model_name du_iso_0108

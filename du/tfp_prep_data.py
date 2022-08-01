@@ -30,14 +30,15 @@ def prep_data(model_dir):
     YVAL = np.load(data_dir + "du_test.npy")
 
     # Shuffle all data.
-    rng = np.random.default_rng(seed=1)
-    rng.shuffle(X)
-    rng = np.random.default_rng(seed=1)
-    rng.shuffle(XVAL)
-    rng = np.random.default_rng(seed=1)
-    rng.shuffle(Y)
-    rng = np.random.default_rng(seed=1)
-    rng.shuffle(YVAL)
+    # Should be already shuffled...
+    # rng = np.random.default_rng(seed=1)
+    # rng.shuffle(X)
+    # rng = np.random.default_rng(seed=1)
+    # rng.shuffle(XVAL)
+    # rng = np.random.default_rng(seed=1)
+    # rng.shuffle(Y)
+    # rng = np.random.default_rng(seed=1)
+    # rng.shuffle(YVAL)
 
     # Truncate data to be divisible by batch_size / train_size.
     N = int(min(X.shape[0], XVAL.shape[0]) // BATCH_SIZE) * BATCH_SIZE
