@@ -26,7 +26,7 @@ def sf_direct_estimation(x, y, u_all, v_all, periodic=True):
     SF3l = np.zeros(np.shape(r))
     SF3t = np.zeros(np.shape(r))
 
-    sample_rate = 10000
+    sample_rate = 1
     ns = int((1024 ** 2 * 2) / sample_rate + 1)
     dul_all = np.zeros((ns, r.size))
     dut_all = np.zeros((ns, r.size))
@@ -47,8 +47,6 @@ def sf_direct_estimation(x, y, u_all, v_all, periodic=True):
             # # Collecting these together.
             dul = np.concatenate((dul0, dul1)).flatten()
             dut = np.concatenate((dut0, dut1)).flatten()
-            # dul = dul1
-            # dut = dut1
             rs = np.ones_like(dul[::sample_rate]) * (i + 1) * 2. * np.pi / 1024  # noqa
             # Stockpile these increments.
             dul_all[:, i] = dul[::sample_rate]
@@ -74,15 +72,17 @@ def sf_direct_estimation(x, y, u_all, v_all, periodic=True):
 x = np.arange(0.5, 1024, 1.) / 1024 * (2 * np.pi)
 y = np.arange(0.5, 1024, 1.) / 1024 * (2 * np.pi)
 u_all = np.load(
-    "/home/s1511699/git/linf/data/du/u_all.npy")[:100, ...]
+    "/home/s1511699/git/linf/data/du/u_all.npy")[::10, ...]
 v_all = np.load(
-    "/home/s1511699/git/linf/data/du/v_all.npy")[:100, ...]
+    "/home/s1511699/git/linf/data/du/v_all.npy")[::10, ...]
 u_all = np.transpose(u_all, (0, 2, 1))
 v_all = np.transpose(v_all, (0, 2, 1))
 
-
+start = time.time()
 r, SF2l, SF2t, SF3l, SF3t, r_all, dul_all, dut_all = sf_direct_estimation(
     x, y, u_all, v_all)
+end = time.time()
+print(f'Time taken: {end - start:.2f} seconds.')
 
 r_all = r_all.flatten()
 dul_all = dul_all.flatten()
@@ -108,10 +108,10 @@ du_all = du_all[shuffled_index, ...]
 #         du_all[N_train:, :])
 
 
-results_dir = (
-    "/home/s1511699/git/linf/data/du/SF_from_field_100/")
-np.save(results_dir + "r.npy", r)
-np.save(results_dir + "SF2l.npy", SF2l)
-np.save(results_dir + "SF2t.npy", SF2t)
-np.save(results_dir + "SF3l.npy", SF3l)
-np.save(results_dir + "SF3t.npy", SF3t)
+# results_dir = (
+#     "/home/s1511699/git/linf/data/du/SF_from_field_100/")
+# np.save(results_dir + "r.npy", r)
+# np.save(results_dir + "SF2l.npy", SF2l)
+# np.save(results_dir + "SF2t.npy", SF2t)
+# np.save(results_dir + "SF3l.npy", SF3l)
+# np.save(results_dir + "SF3t.npy", SF3t)

@@ -22,7 +22,7 @@ def prep_data(model_dir):
     MDN = build_model(model_dir)
     BATCH_SIZE = MDN.layers[0].input_shape[0][0]
 
-    data_dir = "data/du/"
+    data_dir = "data/du/du_from_field/"
 
     X = np.load(data_dir + "r_train.npy")
     XVAL = np.load(data_dir + "r_test.npy")
