@@ -22,7 +22,7 @@ for i in range(1, 17):
 np.save(data_dir + "r.npy", r)
 del r
 
-dut = np.load(data_dir + f"dul_{0:.0f}.npy")
+dut = np.load(data_dir + f"dut_{0:.0f}.npy")
 
 for i in range(1, 17):
     dut = np.concatenate((dut, np.load(data_dir + f"dut_{i:.0f}.npy")), axis=0)

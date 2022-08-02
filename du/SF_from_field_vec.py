@@ -36,7 +36,7 @@ def sf_direct_estimation(x, y, u_all, v_all, periodic=True):
     # dut_all = np.zeros((ns, r.size))
     # r_all = np.zeros((ns, r.size))
 
-    for i in range(len(r)):
+    for i in range(17):  # len(r)):
         print(f'i = {i}')
         t0 = time.time()
         u = u_all
@@ -51,7 +51,7 @@ def sf_direct_estimation(x, y, u_all, v_all, periodic=True):
         dul = np.concatenate((dul0, dul1)).flatten()
         dut = np.concatenate((dut0, dut1)).flatten()
         np.save(data_dir + f"dul_{i:.0f}.npy", dul)
-        np.save(data_dir + f"dut_{i:.0f}.npy", dul)
+        np.save(data_dir + f"dut_{i:.0f}.npy", dut)
         # dul = dul1
         # dut = dut1
         # rs = np.ones_like(dul[::sample_rate]) * (i + 1) * 2. * np.pi / 1024
@@ -120,7 +120,7 @@ print(f'Time taken: {end - start:.2f} seconds.')
 
 results_dir = data_dir
 np.save(results_dir + "r_range.npy", r)
-np.save(results_dir + "SF2l.npy", SF2l)
-np.save(results_dir + "SF2t.npy", SF2t)
-np.save(results_dir + "SF3l.npy", SF3l)
-np.save(results_dir + "SF3t.npy", SF3t)
+# np.save(results_dir + "SF2l.npy", SF2l)
+# np.save(results_dir + "SF2t.npy", SF2t)
+# np.save(results_dir + "SF3l.npy", SF3l)
+# np.save(results_dir + "SF3t.npy", SF3t)

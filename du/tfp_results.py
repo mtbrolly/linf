@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import pickle
 from du.tfp_build_model import build_model
 
-model_dir = "du/models/du_iso_2007_32768/"
-checkpoint_file = "checkpoint_epoch_50"
+model_dir = "du/models/du_iso_0108/"
+checkpoint_file = "checkpoint_epoch_08"
 
 
 def results(model_dir, checkpoint_file):
