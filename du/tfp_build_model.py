@@ -29,7 +29,6 @@ def build_model(model_dir):
     N_HU = [256, 256, 256, 256, 512, 512,
             DENSITY_PARAMS_SIZE]  # Numbers of hidden units
     HL_ACTIVATION = "relu"  # Activation on hidden layer units
-    HL_REGULARISER = None  # H. layer weight reg.
 
     def build_mdn():
         """Construct mixture density network."""
@@ -47,17 +46,19 @@ def build_model(model_dir):
                         tf.keras.layers.Dense(
                             N_HU[hl_i],
                             activation=HL_ACTIVATION,
-                            kernel_regularizer=HL_REGULARISER,
-                            name="hidden_layer_{}".format(hl_i),
                         )(l_i)
                     )
-                else:
+                elif hl_i < len(N_HU) - 1:
                     h_layers.append(
                         tf.keras.layers.Dense(
                             N_HU[hl_i],
                             activation=HL_ACTIVATION,
-                            kernel_regularizer=HL_REGULARISER,
-                            name="hidden_layer_{}".format(hl_i),
+                        )(h_layers[-1])
+                    )
+                else:
+                    h_layers.append(
+                        tf.keras.layers.Dense(
+                            N_HU[hl_i]
                         )(h_layers[-1])
                     )
             # Make Gaussian mixture density layer.

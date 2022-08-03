@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
-model_dir = "du/models/vd0407_lr5em4/"
+model_dir = "du/models/du_iso_0208_pretfp/"
 
 
 def results(model_dir):
@@ -12,8 +12,8 @@ def results(model_dir):
     plt.ioff()
 
     # figures_dir = model_dir + "figures/"
-    # trained_model_file = model_dir + "checkpoint_epoch_10"
-    trained_model_file = model_dir + "trained_nn"
+    trained_model_file = model_dir + "checkpoint_epoch_10"
+    # trained_model_file = model_dir + "trained_nn"
 
     # Load neural network and Gaussian mixture layer.
     with open(model_dir + "gm.pickle", "rb") as f:
@@ -32,8 +32,11 @@ def results(model_dir):
     [Xscaler, Yscaler] = scalers
 
     # Plot p(du_l | r) for some value of r.
-    rks = np.array([64.0, 16.0, 4.0]).reshape((-1, 1))
-    rs = 2 * np.pi / rks
+    # rks = np.array([64.0, 16.0, 4.0]).reshape((-1, 1))
+    # rs = 2 * np.pi / rks
+    data_dir = "./data/du/du_from_field/"
+    rs = np.load(data_dir + "r_range.npy")[:17].reshape((-1, 1))
+    rs = np.concatenate((rs[1:2, :], rs[-2:-1, :]), axis=0)
     # rs = np.array([0.05, 0.25, 1.]).reshape((-1, 1))
     gms_ = gm.get_gms_from_x(Xscaler.standardise(rs))
     cov = Yscaler.invert_standardisation_cov(gms_.covariance()).numpy()
@@ -52,7 +55,9 @@ def results(model_dir):
             )
             * cov[r, 0, 0] ** 0.5
         )
-        plt.plot(dul, pdul, color=c[r], label=rf"$r = 2\pi/{rks[r, 0]:.0f}$")
+        plt.plot(dul, pdul, color=c[r], label=rf"$r = {rs[r, 0]:.4f}$"
+                 # label=rf"$r = 2\pi/{rks[r, 0]:.0f}$"
+                 )
     plt.plot(
         dul_n, -0.5 * np.log(2 * np.pi) - 0.5 * dul_n**2, "k--",
         label=r"Gaussian"
@@ -78,7 +83,9 @@ def results(model_dir):
             )
             * cov[r, 1, 1] ** 0.5
         )
-        plt.plot(dut, pdut, color=c[r], label=rf"$r = 2\pi/{rks[r, 0]:.0f}$")
+        plt.plot(dut, pdut, color=c[r], label=rf"$r = {rs[r, 0]:.4f}$"
+                 # label=rf"$r = 2\pi/{rks[r, 0]:.0f}$"
+                 )
     plt.plot(dul_n, -0.5 * np.log(2 * np.pi) - 0.5 * dul_n**2, "k--",
              label=r"Gaussian")
     plt.xlabel(r"$\delta u_T / \sigma_{\delta u_T | r}$")

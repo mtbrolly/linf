@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import pickle
 
-# model_dir = "du/models/du_iso_0108_pretfp/"
+# model_dir = "du/models/du_iso_0208_pretfp/"
 
 
 def results(model_dir, checkpoint_file):
@@ -56,7 +56,8 @@ def results(model_dir, checkpoint_file):
     plt.close()
 
     r_train = np.load(model_dir + "X.npy")
-    r = np.linspace(r_train.min(), r_train.max(), 1000).reshape((-1, 1))
+    r = np.sort(r_train[:1000], axis=0)
+    # r = np.linspace(r_train.min(), r_train.max(), 1000).reshape((-1, 1))
     gms_ = gm.get_gms_from_x(Xscaler.standardise(r))
     mean = Yscaler.invert_standardisation_loc(gms_.mean()).numpy()
     cov = Yscaler.invert_standardisation_cov(gms_.covariance()).numpy()

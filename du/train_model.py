@@ -67,7 +67,7 @@ def train_model(model_dir, checkpoint_file):
 
     BATCHES_PER_EPOCH = int(X_.shape[0] / BATCH_SIZE)
     CHECKPOINTING = cb.ModelCheckpoint(checkpoint_model_file, monitor='loss',
-                                       save_freq=10 * BATCHES_PER_EPOCH,
+                                       save_freq=1 * BATCHES_PER_EPOCH,
                                        verbose=1)
     CSV_LOGGER = cb.CSVLogger(model_dir + log_file)
     CALLBACKS = [CHECKPOINTING, CSV_LOGGER]
