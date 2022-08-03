@@ -6,7 +6,7 @@ import pickle
 from du.tfp_build_model import build_model
 
 model_dir = "du/models/du_iso_0208_pretfp/"
-checkpoint_file = "checkpoint_epoch_03_tfp"
+checkpoint_file = "checkpoint_epoch_02"
 
 
 def results(model_dir, checkpoint_file):
@@ -48,14 +48,15 @@ def results(model_dir, checkpoint_file):
     # plt.close()
 
     r_train = np.load(model_dir + "X.npy")
+    r = np.unique(r_train[:1000], axis=0)
     # r = np.linspace(r_train.min(), r_train.max(), 1000).reshape((-1, 1))
-    r = np.logspace(np.log10(r_train.min()), np.log10(r_train.max()),
-                    1000).reshape((-1, 1))
+    # r = np.logspace(np.log10(r_train.min()), np.log10(r_train.max()),
+    #                 1000).reshape((-1, 1))
     gms_ = MDN(Xscaler.standardise(r))
     mean = Yscaler.invert_standardisation_loc(gms_.mean()).numpy()
     cov = Yscaler.invert_standardisation_cov(gms_.covariance()).numpy()
 
-    # def s3(x): return gm.S3(x, sample_size=20000, block_size=100)
+    # def s3(x): return gm.S3(x, sample_size=20000)  # , block_size=100)
     # S3l, S3t = s3(Xscaler.standardise(r))
     # S3l = S3l * Yscaler.std[0] ** 3
     # S3t = S3t * Yscaler.std[0] * Yscaler.std[1] ** 2
@@ -76,7 +77,7 @@ def results(model_dir, checkpoint_file):
     plt.tight_layout()
     # plt.savefig(figures_dir + "S1.png", dpi=576)
     plt.xscale('log')
-    plt.yscale('log')
+    # plt.yscale('log')
     plt.tight_layout()
     # plt.savefig(figures_dir + "S1_loglog.png", dpi=576)
     # plt.close()

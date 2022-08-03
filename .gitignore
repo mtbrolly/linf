@@ -8,4 +8,5 @@ figures/
 .ipynb_checkpoints/
 __pycache__/
 nohup.out
-.vscode/settings.json
+.vscode/
+du/data_generation/
