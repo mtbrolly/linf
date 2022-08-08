@@ -17,6 +17,12 @@ model_dir = "du/models/" + model_name + "/"
 
 
 def prep_data(model_dir):
+    """
+    Prepares data for training:
+        - Truncates data to be multiple of batch-size after
+        train--test split;
+        - Makes and pickles Scaler objects for standardising data.
+    """
     tf.keras.backend.set_floatx('float64')
 
     MDN = build_model(model_dir)
