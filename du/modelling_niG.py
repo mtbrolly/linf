@@ -16,9 +16,11 @@ tf.keras.backend.set_floatx("float64")
 
 tfkl = tf.keras.layers
 tfpl = tfp.layers
+tfd = tfp.distributions
+tfa = tf.keras.activations
 
 
-MODEL_DIR = "du/models/0808/"
+MODEL_DIR = "du/models/niG_1008/"
 
 if not Path(MODEL_DIR).exists():
     Path(MODEL_DIR).mkdir(parents=True)
@@ -43,11 +45,7 @@ Y_ = Yscaler.standardise(Y)
 # Data attributes
 O_SIZE = Y.shape[-1]
 
-# Model hyperparameters
-N_C = 32
-
-DENSITY_PARAMS_SIZE = tfpl.MixtureSameFamily.params_size(
-    N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(O_SIZE))
+DENSITY_PARAMS_SIZE = 8
 
 mirrored_strategy = tf.distribute.MirroredStrategy()
 with mirrored_strategy.scope():
@@ -57,8 +55,18 @@ with mirrored_strategy.scope():
         tfkl.Dense(256, activation='relu'),
         tfkl.Dense(256, activation='relu'),
         tfkl.Dense(DENSITY_PARAMS_SIZE),
-        tfpl.MixtureSameFamily(N_C, tfp.layers.MultivariateNormalTriL(O_SIZE))]
+        tfpl.DistributionLambda(
+            lambda t: tfd.Independent(
+                tfd.NormalInverseGaussian(
+                    loc=t[..., :O_SIZE],
+                    scale=tfa.softplus(t[..., O_SIZE:2 * O_SIZE]),
+                    tailweight=tfa.softplus(t[..., 2 * O_SIZE:3 * O_SIZE]),
+                    skewness=t[..., 3 * O_SIZE:]),
+                reinterpreted_batch_ndims=1
+            )
         )
+    ]
+    )
 
 
 # --- TRAIN MODEL ---
