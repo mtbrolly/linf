@@ -18,7 +18,7 @@ tfkl = tf.keras.layers
 tfpl = tfp.layers
 
 
-MODEL_DIR = "du/models/0808/"
+MODEL_DIR = "du/models/GLAD_1608/"
 
 if not Path(MODEL_DIR).exists():
     Path(MODEL_DIR).mkdir(parents=True)
@@ -26,10 +26,15 @@ if not Path(MODEL_DIR).exists():
 
 # --- PREPARE DATA ---
 
-DATA_DIR = "data/du/"
+# DATA_DIR = "data/du/"
 
-X = np.load(DATA_DIR + "r_train.npy")
-Y = np.load(DATA_DIR + "du_train.npy")
+# X = np.load(DATA_DIR + "r_train.npy")
+# Y = np.load(DATA_DIR + "du_train.npy")
+
+DATA_DIR = "data/GLAD/"
+
+X = np.load(DATA_DIR + "r.npy")[:, None]
+Y = np.load(DATA_DIR + "du.npy")
 
 Xscaler = Scaler(X)
 Yscaler = Scaler(Y)
@@ -76,9 +81,9 @@ def nll(y, Y): return -Y.log_prob(y)
 LOSS = nll
 BATCH_SIZE = 8192
 LEARNING_RATE = 5e-4
-EPOCHS = 50
+EPOCHS = 100
 OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
-VALIDATION_SPLIT = 0.1
+VALIDATION_SPLIT = 0.5
 
 # Callbacks
 CSV_LOGGER = cb.CSVLogger(MODEL_DIR + LOG_FILE)
@@ -88,9 +93,9 @@ CHECKPOINTING = cb.ModelCheckpoint(MODEL_DIR + CHECKPOINT_FILE,
                                    save_freq=1 * BATCHES_PER_EPOCH,
                                    verbose=1,
                                    save_weights_only=True)
-EARLY_STOPPING = cb.EarlyStopping(monitor='val_loss', patience=2,
-                                  min_delta=1e-3)
-CALLBACKS = [CHECKPOINTING, CSV_LOGGER, EARLY_STOPPING]
+# EARLY_STOPPING = cb.EarlyStopping(monitor='val_loss', patience=2,
+#                                   min_delta=1e-3)
+CALLBACKS = [CHECKPOINTING, CSV_LOGGER]  # , EARLY_STOPPING]
 
 # Model compilation and training
 model.compile(loss=LOSS, optimizer=OPTIMISER)
@@ -99,7 +104,7 @@ History = model.fit(X_, Y_,
                     epochs=EPOCHS,
                     callbacks=CALLBACKS,
                     batch_size=BATCH_SIZE,
-                    validation_split=0.1,
+                    validation_split=VALIDATION_SPLIT,
                     verbose=2)
 
 model.save_weights(MODEL_DIR + TRAINED_FILE)

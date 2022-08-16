@@ -20,7 +20,7 @@ tfd = tfp.distributions
 tfa = tf.keras.activations
 
 
-MODEL_DIR = "du/models/niG_1008/"
+MODEL_DIR = "du/models/student_1108/"
 
 if not Path(MODEL_DIR).exists():
     Path(MODEL_DIR).mkdir(parents=True)
@@ -30,8 +30,8 @@ if not Path(MODEL_DIR).exists():
 
 DATA_DIR = "data/du/"
 
-X = np.load(DATA_DIR + "r_train.npy")
-Y = np.load(DATA_DIR + "du_train.npy")
+X = np.load(DATA_DIR + "r_train.npy")[::100]
+Y = np.load(DATA_DIR + "du_train.npy")[::100]
 
 Xscaler = Scaler(X)
 Yscaler = Scaler(Y)
@@ -45,24 +45,23 @@ Y_ = Yscaler.standardise(Y)
 # Data attributes
 O_SIZE = Y.shape[-1]
 
-DENSITY_PARAMS_SIZE = 8
+DENSITY_PARAMS_SIZE = 6
 
-mirrored_strategy = tf.distribute.MirroredStrategy()
-with mirrored_strategy.scope():
-    model = tf.keras.Sequential([
-        tfkl.Dense(256, activation='relu'),
-        tfkl.Dense(256, activation='relu'),
-        tfkl.Dense(256, activation='relu'),
-        tfkl.Dense(256, activation='relu'),
-        tfkl.Dense(DENSITY_PARAMS_SIZE),
-        tfpl.DistributionLambda(
-            lambda t: tfd.Independent(
-                tfd.NormalInverseGaussian(
-                    loc=t[..., :O_SIZE],
-                    scale=tfa.softplus(t[..., O_SIZE:2 * O_SIZE]),
-                    tailweight=tfa.softplus(t[..., 2 * O_SIZE:3 * O_SIZE]),
-                    skewness=t[..., 3 * O_SIZE:]),
-                reinterpreted_batch_ndims=1))])
+# mirrored_strategy = tf.distribute.MirroredStrategy()
+# with mirrored_strategy.scope():
+model = tf.keras.Sequential([
+    tfkl.Dense(256, activation='relu'),
+    tfkl.Dense(256, activation='relu'),
+    tfkl.Dense(256, activation='relu'),
+    tfkl.Dense(256, activation='relu'),
+    tfkl.Dense(DENSITY_PARAMS_SIZE),
+    tfpl.DistributionLambda(
+        lambda t: tfd.Independent(
+            tfd.StudentT(
+                loc=t[..., :O_SIZE],
+                scale=tfa.softplus(t[..., O_SIZE:2 * O_SIZE]),
+                df=tfa.softplus(t[..., 2 * O_SIZE:3 * O_SIZE])),
+            reinterpreted_batch_ndims=1))])
 
 
 # --- TRAIN MODEL ---
@@ -92,7 +91,7 @@ CHECKPOINTING = cb.ModelCheckpoint(MODEL_DIR + CHECKPOINT_FILE,
                                    save_freq=1 * BATCHES_PER_EPOCH,
                                    verbose=1,
                                    save_weights_only=True)
-EARLY_STOPPING = cb.EarlyStopping(monitor='val_loss', patience=2,
+EARLY_STOPPING = cb.EarlyStopping(monitor='val_loss', patience=3,
                                   min_delta=1e-3)
 CALLBACKS = [CHECKPOINTING, CSV_LOGGER, EARLY_STOPPING]
 
@@ -104,6 +103,6 @@ History = model.fit(X_, Y_,
                     callbacks=CALLBACKS,
                     batch_size=BATCH_SIZE,
                     validation_split=0.1,
-                    verbose=2)
+                    verbose=1)
 
 model.save_weights(MODEL_DIR + TRAINED_FILE)

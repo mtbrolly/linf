@@ -3,11 +3,11 @@ import tensorflow_probability as tfp
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 import sys
 import os
 from pathlib import Path
 from scipy.stats import norm
+import seaborn as sns
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from tools.preprocessing import Scaler  # noqa: E402
 tfd = tfp.distributions
@@ -21,7 +21,7 @@ tfkl = tf.keras.layers
 tfpl = tfp.layers
 
 
-MODEL_DIR = "du/models/1508/"
+MODEL_DIR = "du/models/niG_1008/"
 CHECKPOINT = "trained"
 FIG_DIR = MODEL_DIR + "figures/"
 if not Path(FIG_DIR).exists():
@@ -48,21 +48,41 @@ Yscaler = Scaler(Y)
 O_SIZE = Y.shape[-1]
 
 # Model hyperparameters
-N_C = 32
 
-DENSITY_PARAMS_SIZE = tfpl.MixtureSameFamily.params_size(
-    N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(O_SIZE))
+DENSITY_PARAMS_SIZE = 8
 
-# mirrored_strategy = tf.distribute.MirroredStrategy()
-# with mirrored_strategy.scope():
 model = tf.keras.Sequential([
     tfkl.Dense(256, activation='relu'),
     tfkl.Dense(256, activation='relu'),
     tfkl.Dense(256, activation='relu'),
     tfkl.Dense(256, activation='relu'),
     tfkl.Dense(DENSITY_PARAMS_SIZE),
-    tfpl.MixtureSameFamily(N_C, tfp.layers.MultivariateNormalTriL(O_SIZE))]
-)
+    tfpl.DistributionLambda(
+        lambda t: tfd.Independent(
+            tfd.NormalInverseGaussian(
+                loc=t[..., :O_SIZE],
+                scale=tfa.softplus(t[..., O_SIZE:2 * O_SIZE]),
+                tailweight=tfa.softplus(t[..., 2 * O_SIZE:3 * O_SIZE]),
+                skewness=t[..., 3 * O_SIZE:]),
+            reinterpreted_batch_ndims=1))])
+
+# DENSITY_PARAMS_SIZE = 6
+
+# # mirrored_strategy = tf.distribute.MirroredStrategy()
+# # with mirrored_strategy.scope():
+# model = tf.keras.Sequential([
+#     tfkl.Dense(256, activation='relu'),
+#     tfkl.Dense(256, activation='relu'),
+#     tfkl.Dense(256, activation='relu'),
+#     tfkl.Dense(256, activation='relu'),
+#     tfkl.Dense(DENSITY_PARAMS_SIZE),
+#     tfpl.DistributionLambda(
+#         lambda t: tfd.Independent(
+#             tfd.StudentT(
+#                 loc=t[..., :O_SIZE],
+#                 scale=tfa.softplus(t[..., O_SIZE:2 * O_SIZE]),
+#                 df=tfa.softplus(t[..., 2 * O_SIZE:3 * O_SIZE])),
+#             reinterpreted_batch_ndims=1))])
 
 
 # Load weights
@@ -99,10 +119,9 @@ gms_ = model(Xscaler.standardise(r))
 
 # --- S2 FIGURE ---
 
-cov = Yscaler.invert_standardisation_cov(gms_.covariance()).numpy()
-
-SF2l = cov[:, 0, 0]
-SF2t = cov[:, 1, 1]
+var = Yscaler.std ** 2 * gms_.distribution.variance().numpy()
+SF2l = var[:, 0]
+SF2t = var[:, 1]
 
 plt.figure()
 plt.loglog(r, SF2l + SF2t, 'k-*', label=r'$S_2(r)$')
@@ -125,112 +144,50 @@ plt.show()
 
 plt.savefig(FIG_DIR + "S2.png", dpi=576)
 
-
 # --- S3 FIGURE ---
 
-def S3(r, sample_size, chunk_size=None):
-    if not chunk_size:
-        gms = model(r)
-        du = gms.sample(sample_shape=(sample_size, ))
-        S3l = tf.math.reduce_mean(du[..., 0] ** 3, axis=0)
-        S3t = tf.math.reduce_mean(du[..., 0] * du[..., 1] ** 2, axis=0)
-    else:
-        assert sample_size % chunk_size == 0, "Chunk size must divide sample."
-        n_chunks = sample_size // chunk_size
-        S3l = np.zeros((n_chunks, r.size))
-        S3t = np.zeros((n_chunks, r.size))
-        for i in range(n_chunks):
-            gms = model(r)
-            du = gms.sample((chunk_size, ))
-            S3l[i, ...] = (tf.math.reduce_mean(du[..., 0] ** 3, axis=0))
-            S3t[i, ...] = tf.math.reduce_mean(
-                du[..., 0] * du[..., 1] ** 2, axis=0)
-        S3l = tf.math.reduce_mean(S3l, axis=0)
-        S3t = tf.math.reduce_mean(S3t, axis=0)
-    return S3l, S3t
-
-
-S3l, S3t = S3(Xscaler.standardise(r), 10000000, chunk_size=10000)
-S3l = S3l * Yscaler.std[0] ** 3
-pomS3t = S3t * Yscaler.std[0] * Yscaler.std[1] ** 2
-
-plt.figure()
-plt.loglog(r, S3l + S3t, 'k-', label=r'$V(r)$')
-plt.loglog(r, -(S3l + S3t), 'k--', label=r'$-V(r)$')
-plt.loglog(r, S3l, 'b-', label=r'$S_{(L)}(r)$')
-plt.loglog(r, -S3l, 'b--', label=r'$-S_{(L)}(r)$')
-plt.loglog(r, S3t, 'g-', label=r'$S_{(T)}(r)$')
-plt.loglog(r, -S3t, 'g--', label=r'$-S_{(T)}(r)$')
-plt.plot(np.array([0.01, 0.1]), 1. * np.array([0.01, 0.1]) ** 3, 'g--',
-         label=r'$r^{3}$')
-plt.vlines(2 * np.pi / 64, 1e-5, 1e-2, 'grey', '-.',
-           label=r'$l_f$')
-plt.vlines(2 * np.pi / 350, 1e-5, 1e-2, 'grey', ':',
-           label=r'$l_{d}$')
-plt.ylim(1e-7, None)
-plt.xlabel(r'$r$')
-plt.legend()
-plt.grid()
-plt.savefig(FIG_DIR + "S3_loglog.png", dpi=576)
-plt.close()
-
+# To do!
 
 # --- p(du|r) FIGURE ---
-
-def get_marg(gms, y_ind):
-    """
-    Takes a multivariate Gaussian mixture which models y|x and y_ind (index
-    of a component of y) and returns the marginal (scalar) Gaussian mixture
-    which models y[y_ind]|x.
-    """
-    marg_loc = gms.components_distribution.loc[..., y_ind]
-    marg_scale = gms.components_distribution.covariance()[...,
-                                                          y_ind, y_ind]
-    marginal_gms = tfd.MixtureSameFamily(
-        mixture_distribution=gms.mixture_distribution,
-        components_distribution=tfd.Normal(
-            loc=marg_loc,
-            scale=marg_scale))
-    return marginal_gms
-
 
 fig, ax = plt.subplots(3, 2, figsize=(10, 10))
 
 rs = np.array([r_range[2], r_range[4], r_range[16]])
 for i in range(len(rs)):
-    # Model pdf
-    mr = model(Xscaler.standardise(rs[i:i + 1]))
-    dul_std, dut_std = Yscaler.invert_standardisation_cov(
-        mr.covariance().numpy().squeeze()).diagonal() ** 0.5
+    mr_ = model(Xscaler.standardise(rs[i:i + 1]))
+    dul_std, dut_std = (
+        Yscaler.std * mr_.distribution.stddev().numpy().flatten())
     dul = np.linspace(-5. * dul_std, 5. * dul_std, 200)
     dut = np.linspace(-5. * dut_std, 5. * dut_std, 200)
     du_ = Yscaler.standardise(
         np.concatenate([dul[:, None], dut[:, None]], axis=1))
-    pdul = np.exp(get_marg(mr, 0).log_prob(du_[:, 0]).numpy()) / Yscaler.std[0]
-    pdut = np.exp(get_marg(mr, 1).log_prob(du_[:, 1]).numpy()) / Yscaler.std[1]
+    pdul = np.exp(
+        mr_.distribution[0, 0].log_prob(du_[:, 0]).numpy()) / Yscaler.std[0]
+    pdut = np.exp(
+        mr_.distribution[0, 1].log_prob(du_[:, 1]).numpy()) / Yscaler.std[1]
     ax[i, 0].plot(dul, np.log(pdul), 'g')
     ax[i, 1].plot(dut, np.log(pdut), 'g')
 
-    # Gaussian pdf with same variance
+    # Gaussian densities
     lp_nl = norm.logpdf(dul, loc=0., scale=dul_std)
     lp_nt = norm.logpdf(dut, loc=0., scale=dut_std)
     ax[i, 0].plot(dul, lp_nl, '--', color='0.5')
     ax[i, 1].plot(dut, lp_nt, '--', color='0.5')
 
-    # Data histogram
-    r_ind = (X == rs[i: i + 1])[:, 0]
+    # Add histogram from training data.
+    r_ind = (X == rs[i:i + 1])[:, 0]
     du_r = Y[r_ind, :]
     hist, bin_e = np.histogram(du_r[:, 0], bins=dul, density=True)
     ax[i, 0].plot((bin_e[1:] + bin_e[:-1]) / 2, np.log(hist), 'k')
     hist, bin_e = np.histogram(du_r[:, 1], bins=dut, density=True)
     ax[i, 1].plot((bin_e[1:] + bin_e[:-1]) / 2, np.log(hist), 'k')
 
-    ax[i, 0].set_title(rf"$r = {rs[i, 0]:.3f}$")
-    ax[i, 1].set_title(rf"$r = {rs[i, 0]:.3f}$")
+    ax[i, 0].set_title(rf"$r = {rs[i][0]:.3f}$")
+    ax[i, 1].set_title(rf"$r = {rs[i][0]:.3f}$")
     ax[i, 0].set_xlabel(r"$\delta u_{L}$")
     ax[i, 1].set_xlabel(r"$\delta u_{T}$")
-    ax[i, 0].set_ylabel(r"$\log p(\delta u_{L}|r)$")
-    ax[i, 1].set_ylabel(r"$\log p(\delta u_{T}|r)$")
+    ax[i, 0].set_ylabel(r"$p(\delta u_{L}|r)$")
+    ax[i, 1].set_ylabel(r"$p(\delta u_{T}|r)$")
     ax[i, 0].grid(True)
     ax[i, 1].grid(True)
     ax[i, 0].set_ylim(np.log(pdul).min() - 1., None)
