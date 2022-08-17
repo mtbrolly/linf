@@ -21,8 +21,9 @@ tfkl = tf.keras.layers
 tfpl = tfp.layers
 
 
-MODEL_DIR = "du/models/1508/"
+MODEL_DIR = "du/models/GLAD_1608/"
 CHECKPOINT = "trained"
+# CHECKPOINT = "checkpoint_epoch_01"
 FIG_DIR = MODEL_DIR + "figures/"
 if not Path(FIG_DIR).exists():
     Path(FIG_DIR).mkdir(parents=True)
@@ -30,10 +31,15 @@ if not Path(FIG_DIR).exists():
 
 # --- PREPARE DATA ---
 
-DATA_DIR = "data/du/"
+# DATA_DIR = "data/du/"
 
-X = np.load(DATA_DIR + "r_train.npy")[::10]
-Y = np.load(DATA_DIR + "du_train.npy")[::10]
+# X = np.load(DATA_DIR + "r_train.npy")[::10]
+# Y = np.load(DATA_DIR + "du_train.npy")[::10]
+
+DATA_DIR = "data/GLAD/"
+
+X = np.load(DATA_DIR + "r.npy")[:, None][::1000]
+Y = np.load(DATA_DIR + "du.npy")[::1000]
 
 # XVAL = np.load(DATA_DIR + "r_test.npy")
 # YVAL = np.load(DATA_DIR + "du_test.npy")
@@ -89,12 +95,15 @@ plt.close()
 
 # --- CALCULATIONS ---
 
-r_range = np.load(DATA_DIR + "du_from_field/r_range.npy")[:, None]
-r = r_range
+# r_range = np.load(DATA_DIR + "du_from_field/r_range.npy")[:, None]
+# r = r_range
+r = np.logspace(np.log10(X.min()),
+                np.log10(X.max()), 100)
+gms_ = model(Xscaler.standardise(r[:, None]))
 # r = np.logspace(np.log10(r_range[0]),
 #                 np.log10(r_range[-1]), 100)
 # del X, Y
-gms_ = model(Xscaler.standardise(r))
+# gms_ = model(Xscaler.standardise(r))
 
 
 # --- S2 FIGURE ---
@@ -108,13 +117,13 @@ plt.figure()
 plt.loglog(r, SF2l + SF2t, 'k-*', label=r'$S_2(r)$')
 plt.plot(r, SF2l, '-*', color=cp[5], label=r'$S_2^{(L)}(r)$')
 plt.plot(r, SF2t, '-*', color=cp[3], label=r'$S_2^{(T)}(r)$')
-plt.plot(np.array([r[0], r[-1]]), 50 * np.array([r[0], r[-1]]) ** 2., '--',
-         color='0.25', label=r'$r^{2}$')
+# plt.plot(np.array([r[0], r[-1]]), 50 * np.array([r[0], r[-1]]) ** 2., '--',
+#          color='0.25', label=r'$r^{2}$')
 ylims = plt.ylim()
-plt.vlines(2 * np.pi / 64 / 2, ylims[0], ylims[1], 'grey', '-.',
-           label=r'$l_f$')
-plt.vlines(2 * np.pi / 350 / 2, ylims[0], ylims[1], 'grey', ':',
-           label=r'$l_{d}$')
+# plt.vlines(2 * np.pi / 64 / 2, ylims[0], ylims[1], 'grey', '-.',
+#            label=r'$l_f$')
+# plt.vlines(2 * np.pi / 350 / 2, ylims[0], ylims[1], 'grey', ':',
+#            label=r'$l_{d}$')
 plt.ylim(*ylims)
 plt.grid(True)
 plt.xlabel(r'$r$')
@@ -196,7 +205,8 @@ def get_marg(gms, y_ind):
 
 fig, ax = plt.subplots(3, 2, figsize=(10, 10))
 
-rs = np.array([r_range[2], r_range[4], r_range[16]])
+# rs = np.array([r_range[2], r_range[4], r_range[16]])
+rs = np.array([10 ** 3, 10 ** 4, 10 ** 5])[:, None]
 for i in range(len(rs)):
     # Model pdf
     mr = model(Xscaler.standardise(rs[i:i + 1]))

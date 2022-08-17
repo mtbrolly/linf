@@ -33,20 +33,20 @@ if not Path(MODEL_DIR).exists():
 
 DATA_DIR = "data/GLAD/"
 
-X = np.load(DATA_DIR + "r.npy")[:, None]
-Y = np.load(DATA_DIR + "du.npy")
+X = np.load(DATA_DIR + "r.npy")[:, None][::1000]
+Y = np.load(DATA_DIR + "du.npy")[::1000]
 
 Xscaler = Scaler(X)
 Yscaler = Scaler(Y)
 
 X_ = Xscaler.standardise(X)
 Y_ = Yscaler.standardise(Y)
-
+del X, Y
 
 # --- BUILD MODEL ---
 
 # Data attributes
-O_SIZE = Y.shape[-1]
+O_SIZE = Y_.shape[-1]
 
 # Model hyperparameters
 N_C = 32
@@ -54,16 +54,16 @@ N_C = 32
 DENSITY_PARAMS_SIZE = tfpl.MixtureSameFamily.params_size(
     N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(O_SIZE))
 
-mirrored_strategy = tf.distribute.MirroredStrategy()
-with mirrored_strategy.scope():
-    model = tf.keras.Sequential([
-        tfkl.Dense(256, activation='relu'),
-        tfkl.Dense(256, activation='relu'),
-        tfkl.Dense(256, activation='relu'),
-        tfkl.Dense(256, activation='relu'),
-        tfkl.Dense(DENSITY_PARAMS_SIZE),
-        tfpl.MixtureSameFamily(N_C, tfp.layers.MultivariateNormalTriL(O_SIZE))]
-        )
+# mirrored_strategy = tf.distribute.MirroredStrategy()
+# with mirrored_strategy.scope():
+model = tf.keras.Sequential([
+    tfkl.Dense(256, activation='relu'),
+    tfkl.Dense(256, activation='relu'),
+    tfkl.Dense(256, activation='relu'),
+    tfkl.Dense(256, activation='relu'),
+    tfkl.Dense(DENSITY_PARAMS_SIZE),
+    tfpl.MixtureSameFamily(N_C, tfp.layers.MultivariateNormalTriL(O_SIZE))]
+)
 
 
 # --- TRAIN MODEL ---
@@ -79,9 +79,9 @@ def nll(y, Y): return -Y.log_prob(y)
 
 
 LOSS = nll
-BATCH_SIZE = 8192
-LEARNING_RATE = 5e-4
-EPOCHS = 100
+BATCH_SIZE = 32  # 8192  # !!!
+LEARNING_RATE = 5e-8  # 5e-4  # !!!
+EPOCHS = 2  # 100  # !!!
 OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
 VALIDATION_SPLIT = 0.5
 
