@@ -1,6 +1,6 @@
 """
-Training script for Gaussian mixture density model of spatial velocity
-increments conditioned on separation distance.
+Training script for Gaussian mixture density model of single-particle
+transition density as a function of initial position.
 """
 
 import tensorflow as tf
@@ -18,7 +18,7 @@ tfkl = tf.keras.layers
 tfpl = tfp.layers
 
 
-MODEL_DIR = "du/models/GLAD_1908/"
+MODEL_DIR = "dx/models/GDP/"
 
 if not Path(MODEL_DIR).exists():
     Path(MODEL_DIR).mkdir(parents=True)
@@ -26,15 +26,10 @@ if not Path(MODEL_DIR).exists():
 
 # --- PREPARE DATA ---
 
-# DATA_DIR = "data/du/"
+DATA_DIR = "data/dx/"
 
-# X = np.load(DATA_DIR + "r_train.npy")
-# Y = np.load(DATA_DIR + "du_train.npy")
-
-DATA_DIR = "data/GLAD/"
-
-X = np.load(DATA_DIR + "r.npy")
-Y = np.load(DATA_DIR + "du.npy")
+X = np.load(DATA_DIR + "X0_train.npy")
+Y = np.load(DATA_DIR + "DX_train.npy")
 
 Xscaler = Scaler(X)
 Yscaler = Scaler(Y)
@@ -54,16 +49,18 @@ N_C = 32
 DENSITY_PARAMS_SIZE = tfpl.MixtureSameFamily.params_size(
     N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(O_SIZE))
 
-mirrored_strategy = tf.distribute.MirroredStrategy()
-with mirrored_strategy.scope():
-    model = tf.keras.Sequential([
-        tfkl.Dense(256, activation='relu'),
-        tfkl.Dense(256, activation='relu'),
-        tfkl.Dense(256, activation='relu'),
-        tfkl.Dense(256, activation='relu'),
-        tfkl.Dense(DENSITY_PARAMS_SIZE),
-        tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(O_SIZE))]
-    )
+# mirrored_strategy = tf.distribute.MirroredStrategy()
+# with mirrored_strategy.scope():
+model = tf.keras.Sequential([
+    tfkl.Dense(256, activation='relu'),
+    tfkl.Dense(256, activation='relu'),
+    tfkl.Dense(256, activation='relu'),
+    tfkl.Dense(256, activation='relu'),
+    tfkl.Dense(512, activation='relu'),
+    tfkl.Dense(512, activation='relu'),
+    tfkl.Dense(DENSITY_PARAMS_SIZE),
+    tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(O_SIZE))]
+)
 
 
 # --- TRAIN MODEL ---

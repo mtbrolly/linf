@@ -4,6 +4,10 @@ Module for creating density network models.
 Classes:
 
     Gm
+
+Functions:
+
+    tensor_diag_softplus
 """
 import numpy as np
 import tensorflow as tf
