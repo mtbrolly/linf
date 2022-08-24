@@ -49,18 +49,18 @@ N_C = 32
 DENSITY_PARAMS_SIZE = tfpl.MixtureSameFamily.params_size(
     N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(O_SIZE))
 
-# mirrored_strategy = tf.distribute.MirroredStrategy()
-# with mirrored_strategy.scope():
-model = tf.keras.Sequential([
-    tfkl.Dense(256, activation='relu'),
-    tfkl.Dense(256, activation='relu'),
-    tfkl.Dense(256, activation='relu'),
-    tfkl.Dense(256, activation='relu'),
-    tfkl.Dense(512, activation='relu'),
-    tfkl.Dense(512, activation='relu'),
-    tfkl.Dense(DENSITY_PARAMS_SIZE),
-    tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(O_SIZE))]
-)
+mirrored_strategy = tf.distribute.MirroredStrategy()
+with mirrored_strategy.scope():
+    model = tf.keras.Sequential([
+        tfkl.Dense(256, activation='relu'),
+        tfkl.Dense(256, activation='relu'),
+        tfkl.Dense(256, activation='relu'),
+        tfkl.Dense(256, activation='relu'),
+        tfkl.Dense(512, activation='relu'),
+        tfkl.Dense(512, activation='relu'),
+        tfkl.Dense(DENSITY_PARAMS_SIZE),
+        tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(O_SIZE))]
+    )
 
 
 # --- TRAIN MODEL ---
@@ -80,7 +80,7 @@ BATCH_SIZE = 8192
 LEARNING_RATE = 5e-4
 EPOCHS = 100
 OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
-VALIDATION_SPLIT = 0.5
+VALIDATION_SPLIT = 0.1
 
 # Callbacks
 CSV_LOGGER = cb.CSVLogger(MODEL_DIR + LOG_FILE)
@@ -90,9 +90,9 @@ CHECKPOINTING = cb.ModelCheckpoint(MODEL_DIR + CHECKPOINT_FILE,
                                    save_freq=1 * BATCHES_PER_EPOCH,
                                    verbose=1,
                                    save_weights_only=True)
-# EARLY_STOPPING = cb.EarlyStopping(monitor='val_loss', patience=2,
-#                                   min_delta=1e-3)
-CALLBACKS = [CHECKPOINTING, CSV_LOGGER]  # , EARLY_STOPPING]
+EARLY_STOPPING = cb.EarlyStopping(monitor='val_loss', patience=5,
+                                  min_delta=1e-4)
+CALLBACKS = [CHECKPOINTING, CSV_LOGGER, EARLY_STOPPING]
 
 # Model compilation and training
 model.compile(loss=LOSS, optimizer=OPTIMISER)

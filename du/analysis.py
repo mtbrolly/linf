@@ -21,9 +21,9 @@ tfkl = tf.keras.layers
 tfpl = tfp.layers
 
 
-MODEL_DIR = "du/models/GLAD_1608/"
-CHECKPOINT = "trained"
-# CHECKPOINT = "checkpoint_epoch_01"
+MODEL_DIR = "du/models/GLAD_1908/"
+# CHECKPOINT = "trained"
+CHECKPOINT = "checkpoint_epoch_01"
 FIG_DIR = MODEL_DIR + "figures/"
 if not Path(FIG_DIR).exists():
     Path(FIG_DIR).mkdir(parents=True)
@@ -97,8 +97,11 @@ plt.close()
 
 # r_range = np.load(DATA_DIR + "du_from_field/r_range.npy")[:, None]
 # r = r_range
-r = np.logspace(np.log10(X.min()),
-                np.log10(X.max()), 100)
+# r = np.logspace(np.log10(X.min()),
+#                 np.log10(X.max()), 100)
+base = 1.5
+r = np.logspace(np.log(10.) / np.log(base), np.log(1e6) / np.log(base), 100,
+                base=base)
 gms_ = model(Xscaler.standardise(r[:, None]))
 # r = np.logspace(np.log10(r_range[0]),
 #                 np.log10(r_range[-1]), 100)
@@ -114,9 +117,9 @@ SF2l = cov[:, 0, 0]
 SF2t = cov[:, 1, 1]
 
 plt.figure()
-plt.loglog(r, SF2l + SF2t, 'k-*', label=r'$S_2(r)$')
-plt.plot(r, SF2l, '-*', color=cp[5], label=r'$S_2^{(L)}(r)$')
-plt.plot(r, SF2t, '-*', color=cp[3], label=r'$S_2^{(T)}(r)$')
+plt.loglog(r, SF2l + SF2t, 'k-', label=r'$S_2(r)$')
+plt.plot(r, SF2l, '-', color=cp[5], label=r'$S_2^{(L)}(r)$')
+plt.plot(r, SF2t, '-', color=cp[3], label=r'$S_2^{(T)}(r)$')
 # plt.plot(np.array([r[0], r[-1]]), 50 * np.array([r[0], r[-1]]) ** 2., '--',
 #          color='0.25', label=r'$r^{2}$')
 ylims = plt.ylim()
@@ -159,9 +162,10 @@ def S3(r, sample_size, chunk_size=None):
     return S3l, S3t
 
 
-S3l, S3t = S3(Xscaler.standardise(r), 10000000, chunk_size=10000)
+S3l, S3t = S3(Xscaler.standardise(r), 1000000,  # 0,
+              chunk_size=10000)
 S3l = S3l * Yscaler.std[0] ** 3
-pomS3t = S3t * Yscaler.std[0] * Yscaler.std[1] ** 2
+S3t = S3t * Yscaler.std[0] * Yscaler.std[1] ** 2
 
 plt.figure()
 plt.loglog(r, S3l + S3t, 'k-', label=r'$V(r)$')
