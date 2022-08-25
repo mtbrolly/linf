@@ -20,7 +20,7 @@ for i in range(len(datas_str)):
 [X, XVAL, Y, YVAL] = datas
 
 # Train model.
-m.train_model(X, Y)
+m.fit(X, Y)
 
 # Save model.
 with open('models/ggm_5degree_ct3/ggm.pickle', 'wb') as f:

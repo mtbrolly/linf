@@ -13,14 +13,18 @@ class LonlatGrid():
 
     def __init__(self, n_x=360, n_y=180,
                  xlims=(-180., 180.), ylims=(-90., 90.)):
+
         n_x = int(n_x)
         n_y = int(n_y)
+
         lon_edges = np.linspace(xlims[0], xlims[1], n_x + 1)
         lat_edges = np.linspace(ylims[0], ylims[1], n_y + 1)
         lon_middles = lon_edges[:-1] + (lon_edges[1] - lon_edges[0]) / 2
         lat_middles = lat_edges[:-1] + (lat_edges[1] - lat_edges[0]) / 2
+
         lon_vertices, lat_vertices = np.meshgrid(lon_edges, lat_edges)
         lon_centres, lat_centres = np.meshgrid(lon_middles, lat_middles)
+
         self.vertices = np.concatenate((lon_vertices[..., None],
                                         lat_vertices[..., None]), axis=2)
         self.centres = np.concatenate((lon_centres[..., None],
@@ -30,6 +34,21 @@ class LonlatGrid():
         self.n_x = n_x
         self.n_y = n_y
 
+    # def eval_on_grid(self, function, position='centres', scaler=None):
+    #     """
+    #     Evaluate a function on grid.
+    #     """
+    #     if position == 'centres':
+    #         points = self.centres
+    #     else:
+    #         points = self.vertices
+
+    #     points = np.reshape(points, (-1, 2))
+    #     if scaler:
+    #         points = scaler(points)
+    #     f_evals = function(points)
+    #     return f_evals
+
     def eval_on_grid(self, function, position='centres', scaler=None):
         """
         Evaluate a function on grid.
@@ -38,14 +57,10 @@ class LonlatGrid():
             points = self.centres
         else:
             points = self.vertices
-        # points = np.concatenate([array.flatten()[:, None]
-        #                          for array in points], axis=1)
-        # points_shape = points.shape
-        points = np.reshape(points, (-1, 2))
+
         if scaler:
             points = scaler(points)
         f_evals = function(points)
-        # f_evals = np.reshape(f_evals, points_shape[:-1] + f_evals.shape[1:])
         return f_evals
 
     def grid_points(self, points):
@@ -103,7 +118,7 @@ class GriddedGaussianModel(LonlatGrid):
         self.mean = np.zeros(self.centres.shape[:-1][::-1] + (2,))
         self.cov = np.zeros(self.centres.shape[:-1][::-1] + (2, 2))
 
-    def train_model(self, X, Y, threshold_count=3):
+    def fit(self, X, Y, threshold_count=3):
         binned_values = self.bin_values(X, Y)
         for x in range(self.n_x):
             for y in range(self.n_y):
@@ -150,6 +165,8 @@ class GriddedGaussianModel(LonlatGrid):
 
 def lonlat_to_cart(lonlatgrid):
     """
+    (NO LONGER NEEDED)
+
     Subclass for converting a longitude-latitude grid to R^3 cartesian
     coordinates.
     """

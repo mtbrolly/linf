@@ -31,6 +31,24 @@ DATA_DIR = "data/dx/"
 X = np.load(DATA_DIR + "X0_train.npy")
 Y = np.load(DATA_DIR + "DX_train.npy")
 
+# Reorder data from (lat, lon) to (lon, lat) and deal with displacements
+# which cross the dateline.
+Xsets = [X, ]
+Ysets = [Y, ]
+
+for i, x in enumerate(Xsets):
+    temp = x[:, 1].copy()
+    x[:, 1] = x[:, 0]
+    x[:, 0] = temp
+    del temp, x
+
+for i, y in enumerate(Ysets):
+    temp = y[:, 1].copy()
+    y[:, 1] = y[:, 0]
+    y[:, 0] = temp
+    del temp
+    y[:, 0] += (y[:, 0] < -270.) * 360. + (y[:, 0] > 270.) * (-360.)
+
 Xscaler = Scaler(X)
 Yscaler = Scaler(Y)
 
