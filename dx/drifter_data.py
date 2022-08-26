@@ -50,7 +50,7 @@ import numpy as np
 
 
 def load_drifter_csv_as_df():
-    fname = "data/drogued_drifters_data/interpolated_gld.20220412_094949"
+    fname = "data/dx/interpolated_gld.20220412_094949"
     return pd.read_csv(fname, sep='\s+', parse_dates=[[1, 2]])  # noqa: W605
 
 
@@ -71,13 +71,13 @@ def remove_drifters_with_gaps():
             # gaps = np.concatenate((gaps, (dts - sixhours)[dts > sixhours]))
 
     df_nogaps = df[~df['id'].isin(ids_gaps)]
-    df_nogaps.to_pickle("data/drogued_drifters_data/drifters_without_gaps.pkl")
+    df_nogaps.to_pickle("data/dx/drifters_without_gaps.pkl")
 
 
 def process_raw_df(drop_extra_columns=True, drop_drifters_with_gaps=True):
     if drop_drifters_with_gaps:
         df = pd.read_pickle(
-            "data/drogued_drifters_data/drifters_without_gaps.pkl")
+            "data/dx/drifters_without_gaps.pkl")
     else:
         df = load_drifter_csv_as_df()
 
@@ -109,7 +109,7 @@ def get_drifter_displacements_as_numpy(tau=2, overlapping=True):
     Subsamples (X0, DX) pairs from buoy trajectories for intervals of length
     tau (in days).
     """
-    data_dir = "data/drogued_drifters_data/"
+    data_dir = "data/dx/"
     sets = ["train", "test"]
     dfs = train_test_split_drifters()
     for i in range(2):
@@ -136,5 +136,37 @@ def get_drifter_displacements_as_numpy(tau=2, overlapping=True):
                 DXagg = np.concatenate((DXagg, DX))
 
         del df
-        np.save(data_dir + "X0_" + sets[i] + ".npy", X0agg)
-        np.save(data_dir + "DX_" + sets[i] + ".npy", DXagg)
+        np.save(data_dir + "X0raw_" + sets[i] + ".npy", X0agg)
+        np.save(data_dir + "DXraw_" + sets[i] + ".npy", DXagg)
+
+
+def reordering_and_dateline_wrap():
+    data_dir = "data/dx/"
+
+    X = np.load(data_dir + "X0raw_train.npy")
+    XVAL = np.load(data_dir + "X0raw_test.npy")
+    Y = np.load(data_dir + "DXraw_train.npy")
+    YVAL = np.load(data_dir + "DXraw_test.npy")
+
+    # Reorder data from (lat, lon) to (lon, lat) and deal with displacements
+    # which cross the dateline.
+    Xsets = [X, XVAL]
+    Ysets = [Y, YVAL]
+
+    for i, x in enumerate(Xsets):
+        temp = x[:, 1].copy()
+        x[:, 1] = x[:, 0]
+        x[:, 0] = temp
+        del temp, x
+
+    for i, y in enumerate(Ysets):
+        temp = y[:, 1].copy()
+        y[:, 1] = y[:, 0]
+        y[:, 0] = temp
+        del temp
+        y[:, 0] += (y[:, 0] < -270.) * 360. + (y[:, 0] > 270.) * (-360.)
+
+    np.save(data_dir + "X0_train.npy", X)
+    np.save(data_dir + "X0_test.npy", XVAL)
+    np.save(data_dir + "DX_train.npy", Y)
+    np.save(data_dir + "DX_test.npy", YVAL)

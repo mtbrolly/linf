@@ -18,7 +18,7 @@ tfkl = tf.keras.layers
 tfpl = tfp.layers
 
 
-MODEL_DIR = "dx/models/GDP/"
+MODEL_DIR = "dx/models/GDP_padded/"
 
 if not Path(MODEL_DIR).exists():
     Path(MODEL_DIR).mkdir(parents=True)
@@ -31,23 +31,14 @@ DATA_DIR = "data/dx/"
 X = np.load(DATA_DIR + "X0_train.npy")
 Y = np.load(DATA_DIR + "DX_train.npy")
 
-# Reorder data from (lat, lon) to (lon, lat) and deal with displacements
-# which cross the dateline.
-Xsets = [X, ]
-Ysets = [Y, ]
+Xws = X.copy()
+Xws[:, 0] -= 360.
+Xes = X.copy()
+Xes[:, 0] += 360.
 
-for i, x in enumerate(Xsets):
-    temp = x[:, 1].copy()
-    x[:, 1] = x[:, 0]
-    x[:, 0] = temp
-    del temp, x
+X = np.concatenate((X, Xes, Xws), axis=0)
+Y = np.concatenate((Y, Y, Y), axis=0)
 
-for i, y in enumerate(Ysets):
-    temp = y[:, 1].copy()
-    y[:, 1] = y[:, 0]
-    y[:, 0] = temp
-    del temp
-    y[:, 0] += (y[:, 0] < -270.) * 360. + (y[:, 0] > 270.) * (-360.)
 
 Xscaler = Scaler(X)
 Yscaler = Scaler(Y)
@@ -108,7 +99,7 @@ CHECKPOINTING = cb.ModelCheckpoint(MODEL_DIR + CHECKPOINT_FILE,
                                    save_freq=1 * BATCHES_PER_EPOCH,
                                    verbose=1,
                                    save_weights_only=True)
-EARLY_STOPPING = cb.EarlyStopping(monitor='val_loss', patience=5,
+EARLY_STOPPING = cb.EarlyStopping(monitor='val_loss', patience=10,
                                   min_delta=1e-4)
 CALLBACKS = [CHECKPOINTING, CSV_LOGGER, EARLY_STOPPING]
 
@@ -119,6 +110,7 @@ History = model.fit(X_, Y_,
                     epochs=EPOCHS,
                     callbacks=CALLBACKS,
                     batch_size=BATCH_SIZE,
+                    shuffle=True,
                     validation_split=VALIDATION_SPLIT,
                     verbose=2)
 
