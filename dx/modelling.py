@@ -9,7 +9,7 @@ import numpy as np
 from pathlib import Path
 import sys
 import os
-# import cartopy.crs as ccrs
+import cartopy.crs as ccrs
 from tensorflow.keras import callbacks as cb
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from tools.preprocessing import Scaler  # noqa: E402
@@ -19,7 +19,7 @@ tfkl = tf.keras.layers
 tfpl = tfp.layers
 
 
-MODEL_DIR = "dx/models/GDP_2908/"
+MODEL_DIR = "dx/models/GDP_VB_2908/"
 
 if not Path(MODEL_DIR).exists():
     Path(MODEL_DIR).mkdir(parents=True)
@@ -40,8 +40,8 @@ Y = np.load(DATA_DIR + "DX_train.npy")
 # X = np.concatenate((X, Xes, Xws), axis=0)
 # Y = np.concatenate((Y, Y, Y), axis=0)
 
-# NPS = ccrs.NorthPolarStereo()
-# X = NPS.transform_points(ccrs.PlateCarree(), X[:, 0], X[:, 1])[:, :2]
+NPS = ccrs.NorthPolarStereo()
+X = NPS.transform_points(ccrs.PlateCarree(), X[:, 0], X[:, 1])[:, :2]
 
 Xscaler = Scaler(X)
 Yscaler = Scaler(Y)
