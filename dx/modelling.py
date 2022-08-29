@@ -37,8 +37,8 @@ Xws[:, 0] -= 360.
 Xes = X.copy()
 Xes[:, 0] += 360.
 
-# X = np.concatenate((X, Xes, Xws), axis=0)
-# Y = np.concatenate((Y, Y, Y), axis=0)
+X = np.concatenate((X, Xes, Xws), axis=0)
+Y = np.concatenate((Y, Y, Y), axis=0)
 
 # NPS = ccrs.NorthPolarStereo()
 # X = NPS.transform_points(ccrs.PlateCarree(), X[:, 0], X[:, 1])[:, :2]
