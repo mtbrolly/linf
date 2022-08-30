@@ -3,12 +3,15 @@ Training script for Gaussian mixture density model of single-particle
 transition density as a function of initial position.
 """
 
+import sys
+import os
 from pathlib import Path
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 # import cartopy.crs as ccrs
 from tensorflow.keras import callbacks as cb
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from tools.preprocessing import Scaler  # noqa: E402
 
 tfkl = tf.keras.layers
