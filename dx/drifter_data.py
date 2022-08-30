@@ -109,7 +109,7 @@ def get_drifter_displacements_as_numpy(tau=2, overlapping=True):
     Subsamples (X0, DX) pairs from buoy trajectories for intervals of length
     tau (in days).
     """
-    data_dir = "data/dx/"
+    data_dir = "data/GDP/2day/"
     sets = ["train", "test"]
     dfs = train_test_split_drifters()
     for i in range(2):
@@ -141,7 +141,7 @@ def get_drifter_displacements_as_numpy(tau=2, overlapping=True):
 
 
 def reordering_and_dateline_wrap():
-    data_dir = "data/dx/"
+    data_dir = "data/GDP/2day/"
 
     X = np.load(data_dir + "X0raw_train.npy")
     XVAL = np.load(data_dir + "X0raw_test.npy")

@@ -3,23 +3,26 @@ Training script for Gaussian mixture density model of single-particle
 transition density as a function of initial position.
 """
 
+from pathlib import Path
+import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
-import numpy as np
-from pathlib import Path
-import sys
-import os
 # import cartopy.crs as ccrs
 from tensorflow.keras import callbacks as cb
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from tools.preprocessing import Scaler  # noqa: E402
-tf.keras.backend.set_floatx("float64")
 
 tfkl = tf.keras.layers
 tfpl = tfp.layers
+tf.keras.backend.set_floatx("float64")
 
+DT = 2
 
-MODEL_DIR = "dx/models/GDP_wrapped_2908/"
+assert DT in (2, 4), "Data not prepared for this value of DT."
+
+if DT == 2:
+    MODEL_DIR = "dx/models/GDP_2day_ml_periodic/"
+else:
+    MODEL_DIR = "dx/models/GDP_4day_ml_periodic/"
 
 if not Path(MODEL_DIR).exists():
     Path(MODEL_DIR).mkdir(parents=True)
@@ -27,7 +30,10 @@ if not Path(MODEL_DIR).exists():
 
 # --- PREPARE DATA ---
 
-DATA_DIR = "data/dx/"
+if DT == 2:
+    DATA_DIR = "data/GDP/2day/"
+else:
+    DATA_DIR = "data/GDP/4day/"
 
 X = np.load(DATA_DIR + "X0_train.npy")
 Y = np.load(DATA_DIR + "DX_train.npy")
@@ -37,11 +43,15 @@ Xws[:, 0] -= 360.
 Xes = X.copy()
 Xes[:, 0] += 360.
 
+# Periodicising X0.
 X = np.concatenate((X, Xes, Xws), axis=0)
 Y = np.concatenate((Y, Y, Y), axis=0)
 
+# =============================================================================
+# # Stereographic projection of X0.
 # NPS = ccrs.NorthPolarStereo()
 # X = NPS.transform_points(ccrs.PlateCarree(), X[:, 0], X[:, 1])[:, :2]
+# =============================================================================
 
 Xscaler = Scaler(X)
 Yscaler = Scaler(Y)
@@ -84,7 +94,9 @@ TRAINED_FILE = "trained/weights"
 # Training configuration
 
 
-def nll(y, Y): return -Y.log_prob(y)
+def nll(data_point, tf_distribution):
+    """ Negative log likelihood. """
+    return -tf_distribution.log_prob(data_point)
 
 
 LOSS = nll
@@ -102,8 +114,7 @@ CHECKPOINTING = cb.ModelCheckpoint(MODEL_DIR + CHECKPOINT_FILE,
                                    save_freq=1 * BATCHES_PER_EPOCH,
                                    verbose=1,
                                    save_weights_only=True)
-EARLY_STOPPING = cb.EarlyStopping(monitor='val_loss', patience=10,
-                                  min_delta=1e-4)
+EARLY_STOPPING = cb.EarlyStopping(monitor='val_loss', patience=10)
 CALLBACKS = [CHECKPOINTING, CSV_LOGGER, EARLY_STOPPING]
 
 # Model compilation and training
