@@ -18,7 +18,7 @@ tfkl = tf.keras.layers
 tfpl = tfp.layers
 tf.keras.backend.set_floatx("float64")
 
-DT = 2
+DT = 4
 
 assert DT in (2, 4), "Data not prepared for this value of DT."
 

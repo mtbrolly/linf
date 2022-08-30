@@ -11,4 +11,4 @@
 source /work/sc073/sc073/mbrolly/.bashrc
 conda activate tf
 
-python dx/modelling_VB.py
+python dx/modelling_vb.py
