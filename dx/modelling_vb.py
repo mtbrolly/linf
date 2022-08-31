@@ -21,9 +21,9 @@ DT = 2
 assert DT in (2, 4), "Data not prepared for this value of DT."
 
 if DT == 2:
-    MODEL_DIR = "dx/models/GDP_2day_ml_periodic/"
+    MODEL_DIR = "dx/models/GDP_2day_vb_periodic/"
 else:
-    MODEL_DIR = "dx/models/GDP_4day_ml_periodic/"
+    MODEL_DIR = "dx/models/GDP_4day_vb_periodic/"
 
 if not Path(MODEL_DIR).exists():
     Path(MODEL_DIR).mkdir(parents=True)
@@ -124,7 +124,7 @@ BATCH_SIZE = 8192
 LEARNING_RATE = 5e-4
 EPOCHS = 100
 OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
-VALIDATION_SPLIT = 0.1
+VALIDATION_SPLIT = 0  # !!!
 
 # Callbacks
 CSV_LOGGER = cb.CSVLogger(MODEL_DIR + LOG_FILE)
@@ -134,7 +134,7 @@ CHECKPOINTING = cb.ModelCheckpoint(MODEL_DIR + CHECKPOINT_FILE,
                                    save_freq=1 * BATCHES_PER_EPOCH,
                                    verbose=1,
                                    save_weights_only=True)
-EARLY_STOPPING = cb.EarlyStopping(monitor='val_loss', patience=10)
+EARLY_STOPPING = cb.EarlyStopping(monitor='loss', patience=10)
 CALLBACKS = [CHECKPOINTING, CSV_LOGGER, EARLY_STOPPING]
 
 # Model compilation and training

@@ -9,6 +9,7 @@ import tensorflow_probability as tfp
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import cartopy
 from tools.preprocessing import Scaler
 from tools import grids
@@ -22,10 +23,10 @@ plt.style.use('./misc/paper.mplstyle')
 plt.ioff()
 
 
-MODEL_DIR = "dx/models/GDP_wrapped_2908/"
+MODEL_DIR = "dx/models/GDP_2day_ml_periodic/"
 CHECKPOINT = "trained"
 # CHECKPOINT = "checkpoint_epoch_01"
-FIG_DIR = MODEL_DIR + "figuRES/"
+FIG_DIR = MODEL_DIR + "figures/"
 if not Path(FIG_DIR).exists():
     Path(FIG_DIR).mkdir(parents=True)
 
@@ -46,9 +47,11 @@ Xes[:, 0] += 360.
 X = np.concatenate((X, Xes, Xws), axis=0)
 Y = np.concatenate((Y, Y, Y), axis=0)
 
+# =============================================================================
 # # Stereographic projection of X0.
 # NPS = ccrs.NorthPolarStereo()
 # X = NPS.transform_points(ccrs.PlateCarree(), X[:, 0], X[:, 1])[:, :2]
+# =============================================================================
 
 Xscaler = Scaler(X)
 Yscaler = Scaler(Y)
@@ -103,77 +106,145 @@ plt.close()
 
 
 # Plot summary statistic on cartopy plot.
-RES = 2.  # Grid points per degree
+RES = 3.  # Grid points per degree
 grid = grids.LonlatGrid(n_x=360 * RES, n_y=180 * RES)
 
+gms_ = grid.eval_on_grid(model, scaler=Xscaler.standardise)
 
+# =============================================================================
 # def transform(X):
 #     return Xscaler.standardise(
 #         NPS.transform_points(
 #             ccrs.PlateCarree(), X[..., 0], X[..., 1])[..., :2])
+# gms_ = grid.eval_on_grid(model, scaler=transform)
+# =============================================================================
 
-
-gms_ = grid.eval_on_grid(model, scaler=Xscaler.standardise)
-# gms_ = grid.eval_on_grid(model, scaler=transform)  # !!!
 mean = Yscaler.invert_standardisation_loc(gms_.mean())
 cov = Yscaler.invert_standardisation_cov(gms_.covariance())
 
-fig_names = ["mean_dx", "mean_dy", "var_dx", "cov_dx_dy", "var_dy",
-             "mix_entropy", "entropy", "kurt_dx", 'kurt_dy',
-             "excess_entropy"]
-fig_titles = ["Mean zonal displacement (in deg. longitude)",
-              "Mean meridional displacement (in deg. latitude)",
-              "Variance of zonal displacement (in deg. longitude sq.)",
-              "Covariance of zonal and meridional displacement"
-              + " (in deg. longitude deg. latitude)",
-              "Variance of meridional displacement (in deg. latitude sq.)",
-              "Mixture entropy", "Information entropy",
-              "Excess kurtosis of zonal displacement",
-              "Excess kurtosis of meridional displacement",
-              "Excess information entropy"]
+fig_names = ["mean_dx", "mean_dx_m", "mean_dy", "mean_dy_m",
+             "var_dx", "var_dx_m", "diff_x",
+             "cov_dx_dy", "cov_dx_dy_m", "diff_xy",
+             "var_dy", "var_dy_m", "diff_y"]
 cmaps = [cmocean.cm.delta, cmocean.cm.amp, cmocean.cm.matter,
          cmocean.cm.balance]
+R = 6378137.  # Equatorial radius in meters.
+lon_deg_to_m = R * np.deg2rad(1) * np.cos(np.deg2rad(grid.centres[..., 1]))
+lat_deg_to_m = R * np.deg2rad(1)
 
-for i in range(5):
+for i in range(13):
     if i == 0:
         pc_data = mean[..., 0].numpy()
         cmap = cmaps[0]
-        LIM = max((-pc_data.min(), pc_data.max()))
+        # LIM = max((-pc_data.min(), pc_data.max()))
         LIM = 1.5
         CLIM = [-LIM, LIM]
+        NORM = None
         EXTEND = 'both'
     elif i == 1:
-        pc_data = mean[..., 1].numpy()
+        pc_data = mean[..., 0].numpy()
+        pc_data *= lon_deg_to_m
         cmap = cmaps[0]
-        LIM = max((-pc_data.min(), pc_data.max()))
+        # LIM = max((-pc_data.min(), pc_data.max()))
+        LIM = 100000.
         CLIM = [-LIM, LIM]
         EXTEND = 'both'
     elif i == 2:
+        pc_data = mean[..., 1].numpy()
+        cmap = cmaps[0]
+        # LIM = max((-pc_data.min(), pc_data.max()))
+        LIM = 1.5
+        CLIM = [-LIM, LIM]
+        EXTEND = 'both'
+    elif i == 3:
+        pc_data = mean[..., 1].numpy()
+        pc_data *= lat_deg_to_m
+        cmap = cmaps[0]
+        # LIM = max((-pc_data.min(), pc_data.max()))
+        LIM = 100000.
+        CLIM = [-LIM, LIM]
+        EXTEND = 'both'
+    elif i == 4:
         pc_data = cov[..., 0, 0].numpy()
         cmap = cmaps[1]
         CLIM = [0., 1.]
         EXTEND = 'max'
-    elif i == 3:
+    elif i == 5:
+        pc_data = cov[..., 0, 0].numpy()
+        pc_data *= lon_deg_to_m ** 2
+        cmap = cmaps[1]
+        # LIM = pc_data.max()
+        LIM = 1e10
+        CLIM = [0., LIM]
+        EXTEND = 'max'
+    elif i == 6:
+        pc_data = cov[..., 0, 0].numpy()
+        pc_data *= lon_deg_to_m ** 2 / (48 * 3600) / 2
+        cmap = cmaps[1]
+        # LIM = pc_data.max()
+        NORM = colors.LogNorm(1e3, 3e4)
+        CLIM = None
+        EXTEND = 'both'
+    elif i == 7:
         pc_data = cov[..., 0, 1].numpy()
         cmap = cmaps[0]
         LIM = max((-pc_data.min(), pc_data.max()))
+        LIM = 0.3
         CLIM = [-LIM, LIM]
+        NORM = None
         EXTEND = 'both'
-    elif i == 4:
+    elif i == 8:
+        pc_data = cov[..., 0, 1].numpy()
+        pc_data *= lon_deg_to_m * lat_deg_to_m
+        cmap = cmaps[0]
+        # LIM = max((-pc_data.min(), pc_data.max()))
+        LIM = 5e9
+        CLIM = [-LIM, LIM]
+        NORM = None
+        EXTEND = 'both'
+    elif i == 9:
+        pc_data = cov[..., 0, 1].numpy()
+        pc_data *= lon_deg_to_m * lat_deg_to_m / (48 * 3600) / 2
+        cmap = cmaps[0]
+        # LIM = max((-pc_data.min(), pc_data.max()))
+        LIM = 1e4
+        CLIM = [-LIM, LIM]
+        NORM = None
+        EXTEND = 'both'
+    elif i == 10:
         pc_data = cov[..., 1, 1].numpy()
         cmap = cmaps[1]
-        CLIM = [0., 0.7]
+        CLIM = [0., 0.6]
+        NORM = None
         EXTEND = 'max'
+    elif i == 11:
+        pc_data = cov[..., 1, 1].numpy()
+        pc_data *= lat_deg_to_m ** 2
+        cmap = cmaps[1]
+        # LIM = pc_data.max()
+        LIM = 1e10
+        CLIM = [0., LIM]
+        NORM = None
+        EXTEND = 'max'
+    elif i == 12:
+        pc_data = cov[..., 1, 1].numpy()
+        pc_data *= lat_deg_to_m ** 2 / (48 * 3600) / 2
+        cmap = cmaps[1]
+        # LIM = pc_data.max()
+        NORM = colors.LogNorm(1e3, 3e4)
+        CLIM = None
+        EXTEND = 'both'
 
     plt.figure(figsize=(6, 3))
     ax = plt.axes(projection=ccrs.Robinson(central_longitude=0.))
     ax.spines['geo'].set_visible(False)
     # ax.gridlines(draw_labels=True, dms=True,
     #              x_inline=False, y_inline=False)
-    plt.title(fig_titles[i])
+    # plt.title(fig_titles[i])
     sca = ax.pcolormesh(grid.vertices[..., 0], grid.vertices[..., 1],
                         pc_data,
                         cmap=cmap,
+                        norm=NORM,
                         clim=CLIM,
                         shading='flat',
                         transform=ccrs.PlateCarree())
