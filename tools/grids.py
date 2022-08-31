@@ -12,7 +12,8 @@ class LonlatGrid():
     """
 
     def __init__(self, n_x=360, n_y=180,
-                 xlims=(-180., 180.), ylims=(-90., 90.)):
+                 xlims=(-180., 180.), ylims=(-90., 90.),
+                 R=6378137.):
 
         n_x = int(n_x)
         n_y = int(n_y)
@@ -29,10 +30,16 @@ class LonlatGrid():
                                         lat_vertices[..., None]), axis=2)
         self.centres = np.concatenate((lon_centres[..., None],
                                        lat_centres[..., None]), axis=2)
+        self.areas = R ** 2 * (
+            np.sin(np.deg2rad(self.vertices[1:, 1:, 1]))
+            - np.sin(np.deg2rad(self.vertices[:-1, :-1, 1]))) * (
+                np.deg2rad(
+                    self.vertices[1:, 1:, 0] - self.vertices[:-1, :-1, 0]))
         self.xlims = xlims
         self.ylims = ylims
         self.n_x = n_x
         self.n_y = n_y
+        self.R = R
 
     # def eval_on_grid(self, function, position='centres', scaler=None):
     #     """

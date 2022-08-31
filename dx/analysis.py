@@ -22,8 +22,15 @@ tf.keras.backend.set_floatx("float64")
 plt.style.use('./misc/paper.mplstyle')
 plt.ioff()
 
+DT = 4
 
-MODEL_DIR = "dx/models/GDP_2day_ml_periodic/"
+assert DT in (2, 4), "No model for this value of DT."
+
+if DT == 2:
+    MODEL_DIR = "dx/models/GDP_2day_ml_periodic/"
+else:
+    MODEL_DIR = "dx/models/GDP_4day_ml_periodic/"
+
 CHECKPOINT = "trained"
 # CHECKPOINT = "checkpoint_epoch_01"
 FIG_DIR = MODEL_DIR + "figures/"
@@ -33,7 +40,10 @@ if not Path(FIG_DIR).exists():
 
 # --- PREPARE DATA ---
 
-DATA_DIR = "data/GDP/2day/"
+if DT == 2:
+    DATA_DIR = "data/GDP/2day/"
+else:
+    DATA_DIR = "data/GDP/4day/"
 
 X = np.load(DATA_DIR + "X0_train.npy")
 Y = np.load(DATA_DIR + "DX_train.npy")
@@ -179,7 +189,7 @@ for i in range(13):
         EXTEND = 'max'
     elif i == 6:
         pc_data = cov[..., 0, 0].numpy()
-        pc_data *= lon_deg_to_m ** 2 / (48 * 3600) / 2
+        pc_data *= lon_deg_to_m ** 2 / (DT * 24 * 3600) / 2
         cmap = cmaps[1]
         # LIM = pc_data.max()
         NORM = colors.LogNorm(1e3, 3e4)
@@ -204,7 +214,7 @@ for i in range(13):
         EXTEND = 'both'
     elif i == 9:
         pc_data = cov[..., 0, 1].numpy()
-        pc_data *= lon_deg_to_m * lat_deg_to_m / (48 * 3600) / 2
+        pc_data *= lon_deg_to_m * lat_deg_to_m / (DT * 24 * 3600) / 2
         cmap = cmaps[0]
         # LIM = max((-pc_data.min(), pc_data.max()))
         LIM = 1e4
@@ -228,7 +238,7 @@ for i in range(13):
         EXTEND = 'max'
     elif i == 12:
         pc_data = cov[..., 1, 1].numpy()
-        pc_data *= lat_deg_to_m ** 2 / (48 * 3600) / 2
+        pc_data *= lat_deg_to_m ** 2 / (DT * 24 * 3600) / 2
         cmap = cmaps[1]
         # LIM = pc_data.max()
         NORM = colors.LogNorm(1e3, 3e4)
