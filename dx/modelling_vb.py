@@ -98,13 +98,14 @@ with mirrored_strategy.scope():
             bias_divergence_fn=(
                 lambda q, p, ignore: kl_lib.kl_divergence(q, p) / X_.shape[0]),
             activation='relu'),
-        VARIATIONAL_LAYER(
-            DENSITY_PARAMS_SIZE,
-            kernel_divergence_fn=(
-                lambda q, p, ignore: kl_lib.kl_divergence(q, p) / X_.shape[0]),
-            bias_divergence_fn=(
-                lambda q, p, ignore: kl_lib.kl_divergence(q, p) / X_.shape[0]),
-            activation=None),
+        # VARIATIONAL_LAYER(
+        #     DENSITY_PARAMS_SIZE,
+        #     kernel_divergence_fn=(
+        #         lambda q, p, ignore: kl_lib.kl_divergence(q, p) / X_.shape[0]),
+        #     bias_divergence_fn=(
+        #         lambda q, p, ignore: kl_lib.kl_divergence(q, p) / X_.shape[0]),
+        #     activation=None),
+        tfkl.Dense(DENSITY_PARAMS_SIZE),
         tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(O_SIZE))]
     )
 
