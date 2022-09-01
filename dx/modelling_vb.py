@@ -24,7 +24,7 @@ DT = 2
 assert DT in (2, 4), "Data not prepared for this value of DT."
 
 if DT == 2:
-    MODEL_DIR = "dx/models/GDP_2day_vb_periodic/"
+    MODEL_DIR = "dx/models/GDP_2day_vb_flipout_periodic/"
 else:
     MODEL_DIR = "dx/models/GDP_4day_vb_periodic/"
 
