@@ -75,11 +75,12 @@ N_C = 32
 DENSITY_PARAMS_SIZE = tfpl.MixtureSameFamily.params_size(
     N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(O_SIZE))
 kl_lib = tfd.kullback_leibler
+VARIATIONAL_LAYER = tfpl.DenseFlipout
 
 mirrored_strategy = tf.distribute.MirroredStrategy()
 with mirrored_strategy.scope():
     model = tf.keras.Sequential([
-        tfpl.DenseReparameterization(
+        VARIATIONAL_LAYER(
             256,
             kernel_divergence_fn=(
                 lambda q, p, ignore: kl_lib.kl_divergence(q, p) / X_.shape[0]),
@@ -90,14 +91,14 @@ with mirrored_strategy.scope():
         tfkl.Dense(256, activation='relu'),
         tfkl.Dense(256, activation='relu'),
         tfkl.Dense(512, activation='relu'),
-        tfpl.DenseReparameterization(
+        VARIATIONAL_LAYER(
             512,
             kernel_divergence_fn=(
                 lambda q, p, ignore: kl_lib.kl_divergence(q, p) / X_.shape[0]),
             bias_divergence_fn=(
                 lambda q, p, ignore: kl_lib.kl_divergence(q, p) / X_.shape[0]),
             activation='relu'),
-        tfpl.DenseReparameterization(
+        VARIATIONAL_LAYER(
             DENSITY_PARAMS_SIZE,
             kernel_divergence_fn=(
                 lambda q, p, ignore: kl_lib.kl_divergence(q, p) / X_.shape[0]),
