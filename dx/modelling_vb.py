@@ -17,6 +17,7 @@ from tools.preprocessing import Scaler  # noqa: E402
 tfkl = tf.keras.layers
 tfpl = tfp.layers
 tfd = tfp.distributions
+kl = tfd.kullback_leibler
 tf.keras.backend.set_floatx("float64")
 
 DT = 2
@@ -72,43 +73,38 @@ O_SIZE = Y_.shape[-1]
 # Model hyperparameters
 N_C = 32
 
-DENSITY_PARAMS_SIZE = tfpl.MixtureSameFamily.params_size(
-    N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(O_SIZE))
-kl_lib = tfd.kullback_leibler
-VARIATIONAL_LAYER = tfpl.DenseFlipout
+DENSITY_PARAMS_SIZE = int(
+    tfpl.MixtureSameFamily.params_size(
+        N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(
+            O_SIZE)))
+
+
+def dense_layer(N, activation):
+    return tfkl.Dense(N, activation=activation)
+
+
+def var_layer(N, activation):
+    return tfpl.DenseFlipout(
+        N,
+        kernel_divergence_fn=(
+            lambda q, p, ignore: kl.kl_divergence(q, p) / X_.shape[0]),
+        bias_divergence_fn=(
+            lambda q, p, ignore: kl.kl_divergence(q, p) / X_.shape[0]),
+        activation=activation)
+
 
 mirrored_strategy = tf.distribute.MirroredStrategy()
 with mirrored_strategy.scope():
     model = tf.keras.Sequential([
-        VARIATIONAL_LAYER(
-            256,
-            kernel_divergence_fn=(
-                lambda q, p, ignore: kl_lib.kl_divergence(q, p) / X_.shape[0]),
-            bias_divergence_fn=(
-                lambda q, p, ignore: kl_lib.kl_divergence(q, p) / X_.shape[0]),
-            activation='relu'),
-        tfkl.Dense(256, activation='relu'),
-        tfkl.Dense(256, activation='relu'),
-        tfkl.Dense(256, activation='relu'),
-        tfkl.Dense(512, activation='relu'),
-        VARIATIONAL_LAYER(
-            512,
-            kernel_divergence_fn=(
-                lambda q, p, ignore: kl_lib.kl_divergence(q, p) / X_.shape[0]),
-            bias_divergence_fn=(
-                lambda q, p, ignore: kl_lib.kl_divergence(q, p) / X_.shape[0]),
-            activation='relu'),
-        # VARIATIONAL_LAYER(
-        #     DENSITY_PARAMS_SIZE,
-        #     kernel_divergence_fn=(
-        #         lambda q, p, ignore: kl_lib.kl_divergence(q, p) / X_.shape[0]),
-        #     bias_divergence_fn=(
-        #         lambda q, p, ignore: kl_lib.kl_divergence(q, p) / X_.shape[0]),
-        #     activation=None),
-        tfkl.Dense(DENSITY_PARAMS_SIZE),
-        tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(O_SIZE))]
+        var_layer(256, 'relu'),
+        var_layer(256, 'relu'),
+        var_layer(256, 'relu'),
+        var_layer(256, 'relu'),
+        var_layer(512, 'relu'),
+        var_layer(512, 'relu'),
+        var_layer(32 * 6, None),
+        tfpl.MixtureSameFamily(32, tfpl.MultivariateNormalTriL(2))]
     )
-
 
 # --- TRAIN MODEL ---
 
