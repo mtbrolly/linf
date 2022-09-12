@@ -2,6 +2,10 @@
 Script for analysis of, and figures relating to, dx models.
 """
 
+from tools import grids
+from tools.preprocessing import Scaler
+import sys
+import os
 from pathlib import Path
 import cmocean
 import tensorflow as tf
@@ -11,8 +15,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import cartopy
-from tools.preprocessing import Scaler
-from tools import grids
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
 ccrs = cartopy.crs
 tfkl = tf.keras.layers
@@ -96,18 +99,18 @@ def var_layer(N, activation):
         activation=activation)
 
 
-# mirrored_strategy = tf.distribute.MirroredStrategy()
-# with mirrored_strategy.scope():
-model = tf.keras.Sequential([
-    var_layer(256, 'relu'),
-    var_layer(256, 'relu'),
-    var_layer(256, 'relu'),
-    var_layer(256, 'relu'),
-    var_layer(512, 'relu'),
-    var_layer(512, 'relu'),
-    var_layer(32 * 6, None),
-    tfpl.MixtureSameFamily(32, tfpl.MultivariateNormalTriL(2))]
-)
+mirrored_strategy = tf.distribute.MirroredStrategy()
+with mirrored_strategy.scope():
+    model = tf.keras.Sequential([
+        var_layer(256, 'relu'),
+        var_layer(256, 'relu'),
+        var_layer(256, 'relu'),
+        var_layer(256, 'relu'),
+        var_layer(512, 'relu'),
+        var_layer(512, 'relu'),
+        var_layer(32 * 6, None),
+        tfpl.MixtureSameFamily(32, tfpl.MultivariateNormalTriL(2))]
+    )
 
 
 # Load weights
@@ -131,7 +134,7 @@ plt.close()
 
 
 # Plot summary statistic on cartopy plot.
-RES = 4.  # Grid points per degree
+RES = 1.  # Grid points per degree
 grid = grids.LonlatGrid(n_x=360 * RES, n_y=180 * RES)
 
 gms_ = grid.eval_on_grid(model, scaler=Xscaler.standardise)
@@ -216,6 +219,8 @@ for i in range(13):
         cmap = cmaps[1]
         LIM = 1e10
         CLIM = [0., LIM]
+        # CLIM = None
+        # NORM = colors.LogNorm(1e7, 1e10)
         EXTEND = 'max'
     elif i == 6:
         pc_data = cov[..., 0, 0].numpy()
