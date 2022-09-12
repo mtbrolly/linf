@@ -11,3 +11,4 @@ nohup.out
 .vscode/
 du/data_generation/
 experiments/
+mask_test.py

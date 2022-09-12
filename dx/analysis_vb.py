@@ -28,9 +28,9 @@ DT = 2
 assert DT in (2, 4), "No model for this value of DT."
 
 if DT == 2:
-    MODEL_DIR = "dx/models/GDP_2day_ml_periodic/"
+    MODEL_DIR = "dx/models/GDP_2day_vb_flipout_periodic/"
 else:
-    MODEL_DIR = "dx/models/GDP_4day_ml_periodic/"
+    MODEL_DIR = "dx/models/GDP_4day_vb_flipout_periodic/"
 
 CHECKPOINT = "trained"
 FIG_DIR = MODEL_DIR + "figures/"
@@ -82,18 +82,33 @@ DENSITY_PARAMS_SIZE = tfpl.MixtureSameFamily.params_size(
     N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(O_SIZE))
 
 
+def dense_layer(N, activation):
+    return tfkl.Dense(N, activation=activation)
+
+
+def var_layer(N, activation):
+    return tfpl.DenseFlipout(
+        N,
+        kernel_divergence_fn=(
+            lambda q, p, ignore: kl.kl_divergence(q, p) / X_size),
+        bias_divergence_fn=(
+            lambda q, p, ignore: kl.kl_divergence(q, p) / X_size),
+        activation=activation)
+
+
 # mirrored_strategy = tf.distribute.MirroredStrategy()
 # with mirrored_strategy.scope():
 model = tf.keras.Sequential([
-    tfkl.Dense(256, activation='relu'),
-    tfkl.Dense(256, activation='relu'),
-    tfkl.Dense(256, activation='relu'),
-    tfkl.Dense(256, activation='relu'),
-    tfkl.Dense(512, activation='relu'),
-    tfkl.Dense(512, activation='relu'),
-    tfkl.Dense(DENSITY_PARAMS_SIZE),
-    tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(O_SIZE))]
+    var_layer(256, 'relu'),
+    var_layer(256, 'relu'),
+    var_layer(256, 'relu'),
+    var_layer(256, 'relu'),
+    var_layer(512, 'relu'),
+    var_layer(512, 'relu'),
+    var_layer(32 * 6, None),
+    tfpl.MixtureSameFamily(32, tfpl.MultivariateNormalTriL(2))]
 )
+
 
 # Load weights
 model.load_weights(MODEL_DIR + CHECKPOINT + "/weights")
@@ -107,8 +122,6 @@ history = pd.read_csv(MODEL_DIR + "log.csv")
 plt.figure()
 plt.plot(range(1, len(history) + 1), history['loss'], 'k',
          label='Training loss')
-plt.plot(range(1, len(history) + 1), history['val_loss'], 'grey',
-         label='Test loss')
 plt.xlabel('Epoch')
 plt.legend()
 plt.grid()
@@ -118,7 +131,7 @@ plt.close()
 
 
 # Plot summary statistic on cartopy plot.
-RES = 3.  # Grid points per degree
+RES = 4.  # Grid points per degree
 grid = grids.LonlatGrid(n_x=360 * RES, n_y=180 * RES)
 
 gms_ = grid.eval_on_grid(model, scaler=Xscaler.standardise)
@@ -131,18 +144,37 @@ gms_ = grid.eval_on_grid(model, scaler=Xscaler.standardise)
 # gms_ = grid.eval_on_grid(model, scaler=transform)
 # =============================================================================
 
-mean = Yscaler.invert_standardisation_loc(gms_.mean())
-cov = Yscaler.invert_standardisation_cov(gms_.covariance())
+means = []
+covs = []
+for i in range(10):
+    gms_ = grid.eval_on_grid(model, scaler=Xscaler.standardise)
+    means.append(
+        Yscaler.invert_standardisation_loc(gms_.mean())[None, ...])
+    covs.append(
+        Yscaler.invert_standardisation_cov(gms_.covariance())[None, ...])
+
+means = tf.concat(means, axis=0)
+covs = tf.concat(covs, axis=0)
+
+mean_of_mean = tf.math.reduce_mean(means, axis=0)
+mean_of_cov = tf.math.reduce_mean(covs, axis=0)
+std_of_mean = tf.math.reduce_std(means, axis=0)
+std_of_cov = tf.math.reduce_std(covs, axis=0)
+
 
 fig_names = ["mean_dx", "mean_dx_m", "mean_dy", "mean_dy_m",
              "var_dx", "var_dx_m", "diff_x",
              "cov_dx_dy", "cov_dx_dy_m", "diff_xy",
-             "var_dy", "var_dy_m", "diff_y"]
+             "var_dy", "var_dy_m", "diff_y",
+             "cv_diff_x"]
 cmaps = [cmocean.cm.delta, cmocean.cm.amp, cmocean.cm.matter,
          cmocean.cm.balance]
 lon_deg_to_m = grid.R * np.deg2rad(1) * np.cos(np.deg2rad(
     grid.centres[..., 1]))
 lat_deg_to_m = grid.R * np.deg2rad(1)
+
+mean = mean_of_mean
+cov = mean_of_cov
 
 for i in range(13):
     if i == 0:
@@ -157,14 +189,12 @@ for i in range(13):
         pc_data = mean[..., 0].numpy()
         pc_data *= lon_deg_to_m
         cmap = cmaps[0]
-        # LIM = max((-pc_data.min(), pc_data.max()))
         LIM = 100000.
         CLIM = [-LIM, LIM]
         EXTEND = 'both'
     elif i == 2:
         pc_data = mean[..., 1].numpy()
         cmap = cmaps[0]
-        # LIM = max((-pc_data.min(), pc_data.max()))
         LIM = 1.5
         CLIM = [-LIM, LIM]
         EXTEND = 'both'
@@ -172,7 +202,6 @@ for i in range(13):
         pc_data = mean[..., 1].numpy()
         pc_data *= lat_deg_to_m
         cmap = cmaps[0]
-        # LIM = max((-pc_data.min(), pc_data.max()))
         LIM = 100000.
         CLIM = [-LIM, LIM]
         EXTEND = 'both'
@@ -185,7 +214,6 @@ for i in range(13):
         pc_data = cov[..., 0, 0].numpy()
         pc_data *= lon_deg_to_m ** 2
         cmap = cmaps[1]
-        # LIM = pc_data.max()
         LIM = 1e10
         CLIM = [0., LIM]
         EXTEND = 'max'
@@ -193,7 +221,6 @@ for i in range(13):
         pc_data = cov[..., 0, 0].numpy()
         pc_data *= lon_deg_to_m ** 2 / (DT * 24 * 3600) / 2
         cmap = cmaps[1]
-        # LIM = pc_data.max()
         NORM = colors.LogNorm(1e3, 3e4)
         CLIM = None
         EXTEND = 'both'
@@ -209,7 +236,6 @@ for i in range(13):
         pc_data = cov[..., 0, 1].numpy()
         pc_data *= lon_deg_to_m * lat_deg_to_m
         cmap = cmaps[0]
-        # LIM = max((-pc_data.min(), pc_data.max()))
         LIM = 5e9
         CLIM = [-LIM, LIM]
         NORM = None
@@ -218,7 +244,6 @@ for i in range(13):
         pc_data = cov[..., 0, 1].numpy()
         pc_data *= lon_deg_to_m * lat_deg_to_m / (DT * 24 * 3600) / 2
         cmap = cmaps[0]
-        # LIM = max((-pc_data.min(), pc_data.max()))
         LIM = 1e4
         CLIM = [-LIM, LIM]
         NORM = None
@@ -233,7 +258,6 @@ for i in range(13):
         pc_data = cov[..., 1, 1].numpy()
         pc_data *= lat_deg_to_m ** 2
         cmap = cmaps[1]
-        # LIM = pc_data.max()
         LIM = 1e10
         CLIM = [0., LIM]
         NORM = None
@@ -242,9 +266,17 @@ for i in range(13):
         pc_data = cov[..., 1, 1].numpy()
         pc_data *= lat_deg_to_m ** 2 / (DT * 24 * 3600) / 2
         cmap = cmaps[1]
-        # LIM = pc_data.max()
         NORM = colors.LogNorm(1e3, 3e4)
         CLIM = None
+        EXTEND = 'both'
+    elif i == 13:
+        pc_data_std = std_of_cov[..., 0, 0].numpy()
+        pc_data = cov[..., 0, 0].numpy()
+        pc_data = pc_data_std / pc_data
+        cmap = 'jet'  # cmaps[1]
+        NORM = colors.LogNorm(1e-2, 1e0)
+        # NORM = None
+        # CLIM = [1e-2, 1e0]
         EXTEND = 'both'
 
     plt.figure(figsize=(6, 3))
