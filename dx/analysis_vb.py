@@ -2,8 +2,6 @@
 Script for analysis of, and figures relating to, dx models.
 """
 
-from tools import grids
-from tools.preprocessing import Scaler
 import sys
 import os
 from pathlib import Path
@@ -16,6 +14,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import cartopy
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
+from tools.preprocessing import Scaler  # noqa: E402
+from tools import grids  # noqa: E402
 
 ccrs = cartopy.crs
 tfkl = tf.keras.layers
