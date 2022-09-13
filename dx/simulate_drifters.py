@@ -84,18 +84,18 @@ DENSITY_PARAMS_SIZE = tfpl.MixtureSameFamily.params_size(
     N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(O_SIZE))
 
 
-# mirrored_strategy = tf.distribute.MirroredStrategy()
-# with mirrored_strategy.scope():
-model = tf.keras.Sequential([
-    tfkl.Dense(256, activation='relu'),
-    tfkl.Dense(256, activation='relu'),
-    tfkl.Dense(256, activation='relu'),
-    tfkl.Dense(256, activation='relu'),
-    tfkl.Dense(512, activation='relu'),
-    tfkl.Dense(512, activation='relu'),
-    tfkl.Dense(DENSITY_PARAMS_SIZE),
-    tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(O_SIZE))]
-)
+mirrored_strategy = tf.distribute.MirroredStrategy()
+with mirrored_strategy.scope():
+    model = tf.keras.Sequential([
+        tfkl.Dense(256, activation='relu'),
+        tfkl.Dense(256, activation='relu'),
+        tfkl.Dense(256, activation='relu'),
+        tfkl.Dense(256, activation='relu'),
+        tfkl.Dense(512, activation='relu'),
+        tfkl.Dense(512, activation='relu'),
+        tfkl.Dense(DENSITY_PARAMS_SIZE),
+        tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(O_SIZE))]
+    )
 
 # Load weights
 model.load_weights(MODEL_DIR + CHECKPOINT + "/weights")
