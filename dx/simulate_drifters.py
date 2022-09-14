@@ -1,16 +1,18 @@
+import sys
+import os
 import time
 import tensorflow as tf
 import tensorflow_probability as tfp
 import numpy as np
 # import matplotlib.pyplot as plt
 # import cartopy
-import cmocean
-import pickle
+# import cmocean
 import regionmask
-from shapely.geometry import Point, LineString
+from shapely.geometry import Point
 from shapely.ops import unary_union
-from tools.preprocessing import Scaler
-from tools import grids
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+# from tools.preprocessing import Scaler
+# from tools import grids
 
 # ccrs = cartopy.crs
 tfkl = tf.keras.layers
@@ -159,7 +161,6 @@ np.save("data/GDP/model_simulations/"
 #             + "1000simulated_drifters180days_2day_ml_periodic.npy")
 
 # Plot drifter trajectories.
-# plt.ioff()
 # plt.figure(figsize=(15, 7.5))
 # ax = plt.axes(projection=ccrs.Robinson(central_longitude=0.))
 # ax.set_extent([-180., 180., -90., 90.], crs=ccrs.PlateCarree())
