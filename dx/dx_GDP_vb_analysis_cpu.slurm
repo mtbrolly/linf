@@ -3,7 +3,7 @@
 #SBATCH --partition=standard
 #SBATCH --qos=highpriority
 #SBATCH --exclusive
-#SBATCH --nodes=4
+#SBATCH --nodes=16
 #SBATCH --time=00:59:00
 #SBATCH --account=sc073
 

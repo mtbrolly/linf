@@ -40,6 +40,7 @@ FIG_DIR = MODEL_DIR + "figures/"
 if not Path(FIG_DIR).exists():
     Path(FIG_DIR).mkdir(parents=True)
 
+print("Configuration done.")
 
 # --- PREPARE DATA ---
 
@@ -72,6 +73,8 @@ X_size = X.shape[0]
 
 del X, Y
 
+print("Data prepared.")
+
 
 # --- BUILD MODEL ---
 
@@ -99,22 +102,24 @@ def var_layer(N, activation):
         activation=activation)
 
 
-mirrored_strategy = tf.distribute.MirroredStrategy()
-with mirrored_strategy.scope():
-    model = tf.keras.Sequential([
-        var_layer(256, 'relu'),
-        var_layer(256, 'relu'),
-        var_layer(256, 'relu'),
-        var_layer(256, 'relu'),
-        var_layer(512, 'relu'),
-        var_layer(512, 'relu'),
-        var_layer(32 * 6, None),
-        tfpl.MixtureSameFamily(32, tfpl.MultivariateNormalTriL(2))]
-    )
+# mirrored_strategy = tf.distribute.MirroredStrategy()
+# with mirrored_strategy.scope():
+model = tf.keras.Sequential([
+    var_layer(256, 'relu'),
+    var_layer(256, 'relu'),
+    var_layer(256, 'relu'),
+    var_layer(256, 'relu'),
+    var_layer(512, 'relu'),
+    var_layer(512, 'relu'),
+    var_layer(32 * 6, None),
+    tfpl.MixtureSameFamily(32, tfpl.MultivariateNormalTriL(2))]
+)
 
 
 # Load weights
 model.load_weights(MODEL_DIR + CHECKPOINT + "/weights")
+
+print("Model loaded.")
 
 # =============================================================================
 # # Load log
@@ -140,6 +145,8 @@ RES = 3.  # Grid points per degree
 grid = grids.LonlatGrid(n_x=360 * RES, n_y=180 * RES)
 
 gms_ = grid.eval_on_grid(model, scaler=Xscaler.standardise)
+
+print("gms_ calculated.")
 
 # =============================================================================
 # def transform(X):
