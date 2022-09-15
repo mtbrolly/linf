@@ -3,8 +3,8 @@ Module for grid creation.
 """
 
 import numpy as np
-import regionmask
-import shapely
+# import regionmask
+# import shapely
 from scipy.stats import multivariate_normal as mvn
 
 
@@ -58,15 +58,17 @@ class LonlatGrid():
     #     f_evals = function(points)
     #     return f_evals
 
-    def generate_mask(self):
-        land = regionmask.defined_regions.natural_earth_v5_0_0.land_110
-        land_poly = shapely.ops.unary_union(land.polygons)
-        points = self.centres.reshape((-1, 2)).tolist()
-        centres_shp = shapely.geometry.MultiPoint(points)
-        land = [centres_shp.geoms[i].intersects(land_poly)
-                for i in range(len(centres_shp.geoms))]
-        self.land = np.array(land).reshape(self.centres.shape[:-1] + (1, ))
-
+# =============================================================================
+#     def generate_mask(self):
+#         land = regionmask.defined_regions.natural_earth_v5_0_0.land_110
+#         land_poly = shapely.ops.unary_union(land.polygons)
+#         points = self.centres.reshape((-1, 2)).tolist()
+#         centres_shp = shapely.geometry.MultiPoint(points)
+#         land = [centres_shp.geoms[i].intersects(land_poly)
+#                 for i in range(len(centres_shp.geoms))]
+#         self.land = np.array(land).reshape(self.centres.shape[:-1] + (1, ))
+# 
+# =============================================================================
     def eval_on_grid(self, function, position='centres', scaler=None):
         """
         Evaluate a function on grid.
