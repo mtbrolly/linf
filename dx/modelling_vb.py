@@ -20,14 +20,16 @@ tfd = tfp.distributions
 kl = tfd.kullback_leibler
 tf.keras.backend.set_floatx("float64")
 
-DT = 2
+DT = 14
 
-assert DT in (2, 4), "Data not prepared for this value of DT."
+assert DT in (2, 4, 14), "Data not prepared for this value of DT."
 
 if DT == 2:
     MODEL_DIR = "dx/models/GDP_2day_vb_flipout_periodic/"
-else:
+elif DT == 4:
     MODEL_DIR = "dx/models/GDP_4day_vb_periodic/"
+else:
+    MODEL_DIR = "dx/models/GDP_14day_vb_flipout_periodic/"
 
 if not Path(MODEL_DIR).exists():
     Path(MODEL_DIR).mkdir(parents=True)
@@ -37,8 +39,10 @@ if not Path(MODEL_DIR).exists():
 
 if DT == 2:
     DATA_DIR = "data/GDP/2day/"
-else:
+elif DT == 4:
     DATA_DIR = "data/GDP/4day/"
+else:
+    DATA_DIR = "data/GDP/14day/"
 
 X = np.load(DATA_DIR + "X0_train.npy")
 Y = np.load(DATA_DIR + "DX_train.npy")

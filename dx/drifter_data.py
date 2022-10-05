@@ -50,7 +50,7 @@ import numpy as np
 
 
 def load_drifter_csv_as_df():
-    fname = "data/dx/interpolated_gld.20220412_094949"
+    fname = "data/GDP/raw/interpolated_gld.20220412_094949"
     return pd.read_csv(fname, sep='\s+', parse_dates=[[1, 2]])  # noqa: W605
 
 
@@ -71,13 +71,13 @@ def remove_drifters_with_gaps():
             # gaps = np.concatenate((gaps, (dts - sixhours)[dts > sixhours]))
 
     df_nogaps = df[~df['id'].isin(ids_gaps)]
-    df_nogaps.to_pickle("data/dx/drifters_without_gaps.pkl")
+    df_nogaps.to_pickle("data/GDP/drifters_without_gaps.pkl")
 
 
 def process_raw_df(drop_extra_columns=True, drop_drifters_with_gaps=True):
     if drop_drifters_with_gaps:
         df = pd.read_pickle(
-            "data/dx/drifters_without_gaps.pkl")
+            "data/GDP/drifters_without_gaps.pkl")
     else:
         df = load_drifter_csv_as_df()
 
@@ -104,12 +104,12 @@ def train_test_split_drifters():
     return train_df, test_df
 
 
-def get_drifter_displacements_as_numpy(tau=2, overlapping=True):
+def get_drifter_displacements_as_numpy(tau=14, overlapping=True):
     """
     Subsamples (X0, DX) pairs from buoy trajectories for intervals of length
     tau (in days).
     """
-    data_dir = "data/GDP/2day/"
+    data_dir = f"data/GDP/{tau:.0f}day/"
     sets = ["train", "test"]
     dfs = train_test_split_drifters()
     for i in range(2):
@@ -141,7 +141,7 @@ def get_drifter_displacements_as_numpy(tau=2, overlapping=True):
 
 
 def reordering_and_dateline_wrap():
-    data_dir = "data/GDP/2day/"
+    data_dir = "data/GDP/14day/"
 
     X = np.load(data_dir + "X0raw_train.npy")
     XVAL = np.load(data_dir + "X0raw_test.npy")
