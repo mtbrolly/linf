@@ -20,9 +20,11 @@ tfd = tfp.distributions
 kl = tfd.kullback_leibler
 tf.keras.backend.set_floatx("float64")
 
-DT = 28
+# Model hyperparameters
+N_C = 1
+DT = 14
 
-MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_vb_flipout_periodic/"
+MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb/"
 
 if not Path(MODEL_DIR).exists():
     Path(MODEL_DIR).mkdir(parents=True)
@@ -62,8 +64,6 @@ del X, Y
 # Data attributes
 O_SIZE = Y_.shape[-1]
 
-# Model hyperparameters
-N_C = 32
 
 DENSITY_PARAMS_SIZE = int(
     tfpl.MixtureSameFamily.params_size(

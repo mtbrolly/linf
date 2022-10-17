@@ -1,22 +1,30 @@
 """
-Script for analysis of, and figures relating to, dx models.
+Script for applying Chapman-Kolmogorov equation on a lon-lat grid.
 """
 
-import sys
-import os
 from pathlib import Path
+import cmocean
 import tensorflow as tf
 import tensorflow_probability as tfp
 import numpy as np
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
-from tools.preprocessing import Scaler  # noqa: E402
-from tools import grids  # noqa: E402
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+import cartopy
+from tools.preprocessing import Scaler
+from tools import grids
 
+ccrs = cartopy.crs
 tfkl = tf.keras.layers
 tfpl = tfp.layers
 tfd = tfp.distributions
 kl = tfd.kullback_leibler
 tf.keras.backend.set_floatx("float64")
+plt.style.use('./misc/experiments.mplstyle')
+plt.ioff()
+
+
+# --- PREPARE DATA ---
 
 # Model hyperparameters
 N_C = 1
@@ -67,6 +75,8 @@ print("Data prepared.")
 # Data attributes
 O_SIZE = len(Yscaler.mean)
 
+# Model hyperparameters
+N_C = 32
 
 DENSITY_PARAMS_SIZE = tfpl.MixtureSameFamily.params_size(
     N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(O_SIZE))
@@ -105,41 +115,39 @@ model.load_weights(MODEL_DIR + CHECKPOINT + "/weights")
 
 print("Model loaded.")
 
+
 # Plot summary statistic on cartopy plot.
-RES = 3.  # Grid points per degree
+RES = 2.  # Grid points per degree
 grid = grids.LonlatGrid(n_x=360 * RES, n_y=180 * RES)
 
-gms_ = grid.eval_on_grid(model, scaler=Xscaler.standardise)
+X0 = np.array([-72.55, 33.67])[None, :]
+gm_ = model(Xscaler.standardise(X0))
 
-print("gms_ calculated.")
 
-# =============================================================================
-# def transform(X):
-#     return Xscaler.standardise(
-#         NPS.transform_points(
-#             ccrs.PlateCarree(), X[..., 0], X[..., 1])[..., :2])
-# gms_ = grid.eval_on_grid(model, scaler=transform)
-# =============================================================================
+def p_X1_given_X0(X1):
+    return Yscaler.invert_standardisation_prob(
+        np.exp(
+            gm_.log_prob(
+                Yscaler.standardise(X1 - X0))))
 
-means = []
-covs = []
-for i in range(100):
-    print(i)
-    gms_ = grid.eval_on_grid(model, scaler=Xscaler.standardise)
-    means.append(
-        Yscaler.invert_standardisation_loc(gms_.mean())[None, ...])
-    covs.append(
-        Yscaler.invert_standardisation_cov(gms_.covariance())[None, ...])
 
-means = tf.concat(means, axis=0)
-covs = tf.concat(covs, axis=0)
+p_X1_given_X0 = grid.eval_on_grid(p_X1_given_X0)
 
-mean_of_mean = tf.math.reduce_mean(means, axis=0)
-mean_of_cov = tf.math.reduce_mean(covs, axis=0)
-std_of_mean = tf.math.reduce_std(means, axis=0)
-std_of_cov = tf.math.reduce_std(covs, axis=0)
 
-np.save(MODEL_DIR + "mean_of_mean.npy", mean_of_mean)
-np.save(MODEL_DIR + "mean_of_cov.npy", mean_of_cov)
-np.save(MODEL_DIR + "std_of_mean.npy", std_of_mean)
-np.save(MODEL_DIR + "std_of_cov.npy", std_of_cov)
+plt.figure(figsize=(6, 3))
+ax = plt.axes(projection=ccrs.Robinson(central_longitude=0.))
+# ax.gridlines(draw_labels=True, dms=True,
+#              x_inline=False, y_inline=False)
+sca = ax.pcolormesh(grid.vertices[..., 0], grid.vertices[..., 1],
+                    np.log(p_X1_given_X0),
+                    cmap=cmocean.cm.amp,
+                    shading='flat',
+                    transform=ccrs.PlateCarree(),
+                    vmin=-100)
+ax.add_feature(cartopy.feature.LAND, zorder=100, edgecolor=None,
+               facecolor='k',
+               linewidth=0.3)
+plt.colorbar(sca, extend=None, shrink=0.8)
+plt.tight_layout()
+plt.show()
+plt.savefig(FIG_DIR + "cond" + ".png", dpi=576)
