@@ -4,7 +4,6 @@ Script for analysis of, and figures relating to, dx models.
 
 import sys
 import os
-from pathlib import Path
 import tensorflow as tf
 import tensorflow_probability as tfp
 import numpy as np
@@ -20,14 +19,11 @@ tf.keras.backend.set_floatx("float64")
 
 # Model hyperparameters
 N_C = 1
-DT = 14
+DT = 4
 
 MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb/"
 
 CHECKPOINT = "trained"
-FIG_DIR = MODEL_DIR + "figures/"
-if not Path(FIG_DIR).exists():
-    Path(FIG_DIR).mkdir(parents=True)
 
 print("Configuration done.")
 
@@ -46,12 +42,6 @@ Xes[:, 0] += 360.
 # Periodicising X0.
 X = np.concatenate((X, Xes, Xws), axis=0)
 Y = np.concatenate((Y, Y, Y), axis=0)
-
-# =============================================================================
-# # Stereographic projection of X0.
-# NPS = ccrs.NorthPolarStereo()
-# X = NPS.transform_points(ccrs.PlateCarree(), X[:, 0], X[:, 1])[:, :2]
-# =============================================================================
 
 Xscaler = Scaler(X)
 Yscaler = Scaler(Y)
@@ -86,18 +76,18 @@ def var_layer(N, activation):
         activation=activation)
 
 
-# mirrored_strategy = tf.distribute.MirroredStrategy()
-# with mirrored_strategy.scope():
-model = tf.keras.Sequential([
-    var_layer(256, 'relu'),
-    var_layer(256, 'relu'),
-    var_layer(256, 'relu'),
-    var_layer(256, 'relu'),
-    var_layer(512, 'relu'),
-    var_layer(512, 'relu'),
-    var_layer(32 * 6, None),
-    tfpl.MixtureSameFamily(32, tfpl.MultivariateNormalTriL(2))]
-)
+mirrored_strategy = tf.distribute.MirroredStrategy()
+with mirrored_strategy.scope():
+    model = tf.keras.Sequential([
+        var_layer(256, 'relu'),
+        var_layer(256, 'relu'),
+        var_layer(256, 'relu'),
+        var_layer(256, 'relu'),
+        var_layer(512, 'relu'),
+        var_layer(512, 'relu'),
+        var_layer(N_C * 6, None),
+        tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(2))]
+    )
 
 
 # Load weights
@@ -112,14 +102,6 @@ grid = grids.LonlatGrid(n_x=360 * RES, n_y=180 * RES)
 gms_ = grid.eval_on_grid(model, scaler=Xscaler.standardise)
 
 print("gms_ calculated.")
-
-# =============================================================================
-# def transform(X):
-#     return Xscaler.standardise(
-#         NPS.transform_points(
-#             ccrs.PlateCarree(), X[..., 0], X[..., 1])[..., :2])
-# gms_ = grid.eval_on_grid(model, scaler=transform)
-# =============================================================================
 
 means = []
 covs = []

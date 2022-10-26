@@ -9,7 +9,6 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
-# import cartopy.crs as ccrs
 from tensorflow.keras import callbacks as cb
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from tools.preprocessing import Scaler  # noqa: E402
@@ -22,7 +21,7 @@ tf.keras.backend.set_floatx("float64")
 
 # Model hyperparameters
 N_C = 1
-DT = 14
+DT = 4
 
 MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb/"
 
@@ -45,12 +44,6 @@ Xes[:, 0] += 360.
 # Periodicising X0.
 X = np.concatenate((X, Xes, Xws), axis=0)
 Y = np.concatenate((Y, Y, Y), axis=0)
-
-# =============================================================================
-# # Stereographic projection of X0.
-# NPS = ccrs.NorthPolarStereo()
-# X = NPS.transform_points(ccrs.PlateCarree(), X[:, 0], X[:, 1])[:, :2]
-# =============================================================================
 
 Xscaler = Scaler(X)
 Yscaler = Scaler(Y)
@@ -78,6 +71,9 @@ def dense_layer(N, activation):
 def var_layer(N, activation):
     return tfpl.DenseFlipout(
         N,
+        bias_posterior_fn=tfp.python.layers.util.default_mean_field_normal_fn(
+            ),
+        bias_prior_fn=tfp.layers.default_multivariate_normal_fn,
         kernel_divergence_fn=(
             lambda q, p, ignore: kl.kl_divergence(q, p) / X_.shape[0]),
         bias_divergence_fn=(
@@ -85,18 +81,18 @@ def var_layer(N, activation):
         activation=activation)
 
 
-mirrored_strategy = tf.distribute.MirroredStrategy()
-with mirrored_strategy.scope():
-    model = tf.keras.Sequential([
-        var_layer(256, 'relu'),
-        var_layer(256, 'relu'),
-        var_layer(256, 'relu'),
-        var_layer(256, 'relu'),
-        var_layer(512, 'relu'),
-        var_layer(512, 'relu'),
-        var_layer(32 * 6, None),
-        tfpl.MixtureSameFamily(32, tfpl.MultivariateNormalTriL(2))]
-    )
+# mirrored_strategy = tf.distribute.MirroredStrategy()
+# with mirrored_strategy.scope():
+model = tf.keras.Sequential([
+    var_layer(256, 'relu'),
+    var_layer(256, 'relu'),
+    var_layer(256, 'relu'),
+    var_layer(256, 'relu'),
+    var_layer(512, 'relu'),
+    var_layer(512, 'relu'),
+    var_layer(N_C * 6, None),
+    tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(2))]
+)
 
 # --- TRAIN MODEL ---
 
@@ -114,10 +110,10 @@ def nll(data_point, tf_distribution):
 
 LOSS = nll
 BATCH_SIZE = 8192
-LEARNING_RATE = 5e-5  # 5e-4
-EPOCHS = 1000  # !!!
+LEARNING_RATE = 1e-4  # 5e-4
+EPOCHS = 1000
 OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
-VALIDATION_SPLIT = 0  # !!!
+VALIDATION_SPLIT = 0
 
 # Callbacks
 CSV_LOGGER = cb.CSVLogger(MODEL_DIR + LOG_FILE)
@@ -127,7 +123,7 @@ CHECKPOINTING = cb.ModelCheckpoint(MODEL_DIR + CHECKPOINT_FILE,
                                    save_freq=1 * BATCHES_PER_EPOCH,
                                    verbose=1,
                                    save_weights_only=True)
-EARLY_STOPPING = cb.EarlyStopping(monitor='loss', patience=10)
+EARLY_STOPPING = cb.EarlyStopping(monitor='loss', patience=100)
 CALLBACKS = [CHECKPOINTING, CSV_LOGGER, EARLY_STOPPING]
 
 # Model compilation and training
