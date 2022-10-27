@@ -10,19 +10,23 @@ plt.ioff()
 df = process_raw_df()
 ids = np.unique(df.index.get_level_values(level=0))
 
-df = df[:]
-dur = df.groupby(level=0).size()
+ids = ids[::100]  # !!!
 
-ids180 = df.index.get_level_values(0).unique()[dur > 180 * 4]
-desired_dur = 180 * 4
+# df = df[:]
+# dur = df.groupby(level=0).size()
 
-np.random.seed(1)
-Np = 1000
-chosen_ids = np.random.choice(ids180, size=Np, replace=False)
+# ids180 = df.index.get_level_values(0).unique()[dur > 180 * 4]
+
+# np.random.seed(1)
+# Np = 1000
+# chosen_ids = np.random.choice(ids180, size=Np, replace=False)
+
+Np = len(ids)
 
 X0 = np.zeros((Np, 2))
 for i in range(Np):
-    X0[i, :] = df.xs(chosen_ids[i], level=0)[0:1].values
+    # X0[i, :] = df.xs(chosen_ids[i], level=0)[0:1].values
+    X0[i, :] = df.xs(ids[i], level=0)[0:1].values
 
 X0 = X0[:, ::-1]
 # np.save("data/GDP/coords/sampled_drifters_inits.npy", X0)
@@ -38,9 +42,10 @@ for i in range(Np):
     print(i)
     # d = ids[i]
     # d = int(np.floor(len(ids) * np.random.rand(1)))
-    d_data = df.xs(chosen_ids[i], level=0)[:desired_dur]
-    x = d_data.lon.to_numpy()[::4]  # !!!
-    y = d_data.lat.to_numpy()[::4]
+    # d_data = df.xs(chosen_ids[i], level=0)
+    d_data = df.xs(ids[i], level=0)
+    x = d_data.lon.to_numpy()
+    y = d_data.lat.to_numpy()
     sca = ax.plot(x, y,
                   linewidth=0.5,
                   transform=ccrs.Geodetic())
@@ -50,5 +55,5 @@ ax.add_feature(cartopy.feature.LAND, zorder=100,
 plt.tight_layout()
 # plt.show()
 
-plt.savefig("figures/1000drifters_without_gaps_same_length_13_09_22_2days.png",
+plt.savefig("figures/all_drifters.png",
             format='png')

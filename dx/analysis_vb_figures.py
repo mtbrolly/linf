@@ -28,7 +28,7 @@ plt.ioff()
 
 # Model hyperparameters
 N_C = 1
-DT = 14
+DT = 4
 
 MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb/"
 
@@ -57,7 +57,7 @@ plt.ylabel(r'$\mathrm{Training loss}$')
 # plt.legend()
 plt.grid()
 plt.tight_layout()
-plt.ylim(None, history['loss'][0])
+plt.ylim(history['loss'].min(), history['loss'][0])
 plt.savefig(FIG_DIR + "loss.png")
 plt.close()
 
@@ -74,7 +74,9 @@ std_of_cov = np.load(MODEL_DIR + "std_of_cov.npy")
 
 fig_names = ["mean_dx", "mean_u", "mean_dy", "mean_v",
              "var_dx", "diff_x", "cov_dx_dy", "diff_xy", "var_dy", "diff_y",
-             "cv_diff_x", "cv_diff_y"]
+             "cv_diff_x", "cv_diff_y",
+             "cv_mean_dx", "cv_mean_dy",
+             "cv_var_dx", "cv_diff_x", "cv_cov_dx_dy"]
 cmaps = [cmocean.cm.delta, cmocean.cm.amp, cmocean.cm.matter,
          cmocean.cm.balance]
 lon_deg_to_m = grid.R * np.deg2rad(1) * np.cos(np.deg2rad(
@@ -85,7 +87,7 @@ sec_per_day = 24 * 60 * 60
 mean = mean_of_mean
 cov = mean_of_cov
 
-for i in range(12):
+for i in range(14):
     if i == 0:  # Mean dx
         pc_data = mean[..., 0].copy()
         pc_data *= lon_deg_to_m
@@ -175,6 +177,24 @@ for i in range(12):
         pc_data_std = std_of_cov[..., 1, 1].copy()
         pc_data = cov[..., 1, 1]
         pc_data = pc_data_std / pc_data
+        cmap = 'jet'  # cmaps[1]
+        NORM = colors.LogNorm(1e-2, 1e0)
+        # NORM = None
+        # CLIM = [1e-2, 1e0]
+        EXTEND = 'both'
+    elif i == 12:  # CV mean_dx
+        pc_data_std = std_of_mean[..., 0].copy()
+        pc_data = mean[..., 0]
+        pc_data = np.abs(pc_data_std / pc_data)
+        cmap = 'jet'  # cmaps[1]
+        NORM = colors.LogNorm(1e-2, 1e0)
+        # NORM = None
+        # CLIM = [1e-2, 1e0]
+        EXTEND = 'both'
+    elif i == 13:  # CV mean_dy
+        pc_data_std = std_of_mean[..., 1].copy()
+        pc_data = mean[..., 1]
+        pc_data = np.abs(pc_data_std / pc_data) * (pc_data > 0.05)
         cmap = 'jet'  # cmaps[1]
         NORM = colors.LogNorm(1e-2, 1e0)
         # NORM = None

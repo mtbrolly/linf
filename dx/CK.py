@@ -20,28 +20,30 @@ tfpl = tfp.layers
 tfd = tfp.distributions
 kl = tfd.kullback_leibler
 tf.keras.backend.set_floatx("float64")
-plt.style.use('./misc/experiments.mplstyle')
+plt.style.use('./misc/paper.mplstyle')
 plt.ioff()
 
+DT = 2
 
-# --- PREPARE DATA ---
+assert DT in (2, 4), "No model for this value of DT."
 
-# Model hyperparameters
-N_C = 1
-DT = 14
-
-MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb/"
+if DT == 2:
+    MODEL_DIR = "dx/models/GDP_2day_ml_periodic/"
+else:
+    MODEL_DIR = "dx/models/GDP_4day_ml_periodic/"
 
 CHECKPOINT = "trained"
 FIG_DIR = MODEL_DIR + "figures/"
 if not Path(FIG_DIR).exists():
     Path(FIG_DIR).mkdir(parents=True)
 
-print("Configuration done.")
 
 # --- PREPARE DATA ---
 
-DATA_DIR = f"data/GDP/{DT:.0f}day/"
+if DT == 2:
+    DATA_DIR = "data/GDP/2day/"
+else:
+    DATA_DIR = "data/GDP/4day/"
 
 X = np.load(DATA_DIR + "X0_train.npy")
 Y = np.load(DATA_DIR + "DX_train.npy")
@@ -61,8 +63,6 @@ X_size = X.shape[0]
 
 del X, Y
 
-print("Data prepared.")
-
 
 # --- BUILD MODEL ---
 
@@ -76,46 +76,42 @@ DENSITY_PARAMS_SIZE = tfpl.MixtureSameFamily.params_size(
     N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(O_SIZE))
 
 
-def dense_layer(N, activation):
-    return tfkl.Dense(N, activation=activation)
-
-
-def var_layer(N, activation):
-    return tfpl.DenseFlipout(
-        N,
-        kernel_divergence_fn=(
-            lambda q, p, ignore: kl.kl_divergence(q, p) / X_size),
-        bias_divergence_fn=(
-            lambda q, p, ignore: kl.kl_divergence(q, p) / X_size),
-        activation=activation)
-
-
 # mirrored_strategy = tf.distribute.MirroredStrategy()
 # with mirrored_strategy.scope():
 model = tf.keras.Sequential([
-    var_layer(256, 'relu'),
-    var_layer(256, 'relu'),
-    var_layer(256, 'relu'),
-    var_layer(256, 'relu'),
-    var_layer(512, 'relu'),
-    var_layer(512, 'relu'),
-    var_layer(N_C * 6, None),
-    tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(2))]
+    tfkl.Dense(256, activation='relu'),
+    tfkl.Dense(256, activation='relu'),
+    tfkl.Dense(256, activation='relu'),
+    tfkl.Dense(256, activation='relu'),
+    tfkl.Dense(512, activation='relu'),
+    tfkl.Dense(512, activation='relu'),
+    tfkl.Dense(DENSITY_PARAMS_SIZE),
+    tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(O_SIZE))]
 )
-
 
 # Load weights
 model.load_weights(MODEL_DIR + CHECKPOINT + "/weights")
 
-print("Model loaded.")
-
 
 # Plot summary statistic on cartopy plot.
-RES = 2.  # Grid points per degree
+RES = 4.  # Grid points per degree
 grid = grids.LonlatGrid(n_x=360 * RES, n_y=180 * RES)
 
 X0 = np.array([-72.55, 33.67])[None, :]
 gm_ = model(Xscaler.standardise(X0))
+
+gm_comp_weights = tf.math.softmax(
+    gm_.parameters['mixture_distribution'].logits).numpy() > 0.05  # TODO: check
+
+gm_comp_means = Yscaler.invert_standardisation_loc(
+    gm_.parameters['components_distribution'].mean()).numpy().squeeze() + X0
+
+gm_comp_covs = Yscaler.invert_standardisation_cov(
+    gm_.parameters['components_distribution'].covariance()).numpy().squeeze()
+
+eig = np.linalg.eig(gm_comp_covs[0, ...])
+
+gm_comp_means = gm_comp_means[gm_comp_weights.flatten(), :]
 
 
 def p_X1_given_X0(X1):
@@ -130,18 +126,31 @@ p_X1_given_X0 = grid.eval_on_grid(p_X1_given_X0)
 
 plt.figure(figsize=(6, 3))
 ax = plt.axes(projection=ccrs.Robinson(central_longitude=0.))
+# ax.spines['geo'].set_visible(False)
 # ax.gridlines(draw_labels=True, dms=True,
 #              x_inline=False, y_inline=False)
+ax.scatter(X0[0, 0], X0[0, 1], c='b', s=1, marker='x',
+           transform=ccrs.PlateCarree(), zorder=10)
+for i in range(len(gm_comp_means)):
+    ax.scatter(gm_comp_means[i, 0], gm_comp_means[i, 1],
+               c='grey', s=1, marker='x',
+               transform=ccrs.PlateCarree(), zorder=10)
+    vals, vecs = np.linalg.eig(gm_comp_covs[i, ...])
+    # vals *= 10
+    ax.arrow(gm_comp_means[i, 0], gm_comp_means[i, 1],
+             vals[0] * vecs[0, 0], vals[0] * vecs[1, 0],
+             color='k', transform=ccrs.PlateCarree(), zorder=100)
+    ax.arrow(gm_comp_means[i, 0], gm_comp_means[i, 1],
+             vals[1] * vecs[0, 1], vals[1] * vecs[1, 1],
+             color='k', transform=ccrs.PlateCarree(), zorder=100)
 sca = ax.pcolormesh(grid.vertices[..., 0], grid.vertices[..., 1],
                     np.log(p_X1_given_X0),
                     cmap=cmocean.cm.amp,
                     shading='flat',
-                    transform=ccrs.PlateCarree(),
-                    vmin=-100)
+                    transform=ccrs.PlateCarree())
 ax.add_feature(cartopy.feature.LAND, zorder=100, edgecolor=None,
                facecolor='k',
                linewidth=0.3)
 plt.colorbar(sca, extend=None, shrink=0.8)
 plt.tight_layout()
 plt.show()
-plt.savefig(FIG_DIR + "cond" + ".png", dpi=576)

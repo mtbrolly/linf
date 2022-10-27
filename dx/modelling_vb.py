@@ -23,7 +23,7 @@ tf.keras.backend.set_floatx("float64")
 N_C = 1
 DT = 4
 
-MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb_SGD/"
+MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb_val/"
 
 if not Path(MODEL_DIR).exists():
     Path(MODEL_DIR).mkdir(parents=True)
@@ -112,9 +112,8 @@ LOSS = nll
 BATCH_SIZE = 8192
 LEARNING_RATE = 5e-4
 EPOCHS = 1000
-# OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
-OPTIMISER = tf.keras.optimizers.SGD(learning_rate=LEARNING_RATE)
-VALIDATION_SPLIT = 0
+OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
+VALIDATION_SPLIT = 0.1
 
 # Callbacks
 CSV_LOGGER = cb.CSVLogger(MODEL_DIR + LOG_FILE)
