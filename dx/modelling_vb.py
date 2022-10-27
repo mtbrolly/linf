@@ -23,7 +23,7 @@ tf.keras.backend.set_floatx("float64")
 N_C = 1
 DT = 4
 
-MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb/"
+MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb_SGD/"
 
 if not Path(MODEL_DIR).exists():
     Path(MODEL_DIR).mkdir(parents=True)
@@ -81,18 +81,18 @@ def var_layer(N, activation):
         activation=activation)
 
 
-# mirrored_strategy = tf.distribute.MirroredStrategy()
-# with mirrored_strategy.scope():
-model = tf.keras.Sequential([
-    var_layer(256, 'relu'),
-    var_layer(256, 'relu'),
-    var_layer(256, 'relu'),
-    var_layer(256, 'relu'),
-    var_layer(512, 'relu'),
-    var_layer(512, 'relu'),
-    var_layer(N_C * 6, None),
-    tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(2))]
-)
+mirrored_strategy = tf.distribute.MirroredStrategy()
+with mirrored_strategy.scope():
+    model = tf.keras.Sequential([
+        var_layer(256, 'relu'),
+        var_layer(256, 'relu'),
+        var_layer(256, 'relu'),
+        var_layer(256, 'relu'),
+        var_layer(512, 'relu'),
+        var_layer(512, 'relu'),
+        var_layer(N_C * 6, None),
+        tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(2))]
+    )
 
 # --- TRAIN MODEL ---
 
@@ -110,9 +110,10 @@ def nll(data_point, tf_distribution):
 
 LOSS = nll
 BATCH_SIZE = 8192
-LEARNING_RATE = 5e-5  # 5e-4
+LEARNING_RATE = 5e-4
 EPOCHS = 1000
-OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
+# OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
+OPTIMISER = tf.keras.optimizers.SGD(learning_rate=LEARNING_RATE)
 VALIDATION_SPLIT = 0
 
 # Callbacks
