@@ -23,7 +23,7 @@ tf.keras.backend.set_floatx("float64")
 N_C = 1
 DT = 4
 
-MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb_val/"
+MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb/"
 
 if not Path(MODEL_DIR).exists():
     Path(MODEL_DIR).mkdir(parents=True)
@@ -110,10 +110,10 @@ def nll(data_point, tf_distribution):
 
 LOSS = nll
 BATCH_SIZE = 8192
-LEARNING_RATE = 5e-4
+LEARNING_RATE = 5e-5
 EPOCHS = 1000
 OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
-VALIDATION_SPLIT = 0.1
+VALIDATION_SPLIT = 0
 
 # Callbacks
 CSV_LOGGER = cb.CSVLogger(MODEL_DIR + LOG_FILE)
@@ -123,7 +123,7 @@ CHECKPOINTING = cb.ModelCheckpoint(MODEL_DIR + CHECKPOINT_FILE,
                                    save_freq=1 * BATCHES_PER_EPOCH,
                                    verbose=1,
                                    save_weights_only=True)
-EARLY_STOPPING = cb.EarlyStopping(monitor='loss', patience=100)
+EARLY_STOPPING = cb.EarlyStopping(monitor='loss', patience=10, min_delta=1e-2)
 CALLBACKS = [CHECKPOINTING, CSV_LOGGER, EARLY_STOPPING]
 
 # Model compilation and training
