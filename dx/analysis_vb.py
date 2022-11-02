@@ -69,6 +69,9 @@ def dense_layer(N, activation):
 def var_layer(N, activation):
     return tfpl.DenseFlipout(
         N,
+        bias_posterior_fn=tfp.python.layers.util.default_mean_field_normal_fn(
+            ),
+        bias_prior_fn=tfp.layers.default_multivariate_normal_fn,
         kernel_divergence_fn=(
             lambda q, p, ignore: kl.kl_divergence(q, p) / X_size),
         bias_divergence_fn=(
