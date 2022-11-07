@@ -55,13 +55,11 @@ del X, Y
 # --- BUILD MODEL ---
 
 # Data attributes
-O_SIZE = Y_.shape[-1]
+O_SIZE = len(Yscaler.mean)
 
 
-DENSITY_PARAMS_SIZE = int(
-    tfpl.MixtureSameFamily.params_size(
-        N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(
-            O_SIZE)))
+DENSITY_PARAMS_SIZE = tfpl.MixtureSameFamily.params_size(
+    N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(O_SIZE))
 
 
 def dense_layer(N, activation):
@@ -128,6 +126,9 @@ CALLBACKS = [CHECKPOINTING, CSV_LOGGER, EARLY_STOPPING]
 
 # Model compilation and training
 model.compile(loss=LOSS, optimizer=OPTIMISER)
+
+# Save untrained (prior model)
+model.save_weights(MODEL_DIR + "un" + TRAINED_FILE)
 
 History = model.fit(X_, Y_,
                     epochs=EPOCHS,
