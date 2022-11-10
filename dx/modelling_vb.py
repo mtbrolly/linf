@@ -110,7 +110,7 @@ LOSS = nll
 BATCH_SIZE = 8192
 LEARNING_RATE = 5e-5
 EPOCHS = 1000
-OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
+OPTIMISER = tf.keras.optimizers.Adamax(learning_rate=LEARNING_RATE)
 VALIDATION_SPLIT = 0
 
 # Callbacks
