@@ -23,7 +23,7 @@ tf.keras.backend.set_floatx("float64")
 N_C = 1
 DT = 4
 
-MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb/"
+MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb_flipout_Adamax/"
 
 if not Path(MODEL_DIR).exists():
     Path(MODEL_DIR).mkdir(parents=True)
@@ -121,14 +121,11 @@ CHECKPOINTING = cb.ModelCheckpoint(MODEL_DIR + CHECKPOINT_FILE,
                                    save_freq=1 * BATCHES_PER_EPOCH,
                                    verbose=1,
                                    save_weights_only=True)
-EARLY_STOPPING = cb.EarlyStopping(monitor='loss', patience=10, min_delta=1e-2)
+EARLY_STOPPING = cb.EarlyStopping(monitor='loss', patience=20, min_delta=0.)
 CALLBACKS = [CHECKPOINTING, CSV_LOGGER, EARLY_STOPPING]
 
 # Model compilation and training
 model.compile(loss=LOSS, optimizer=OPTIMISER)
-
-# Save untrained (prior model)
-model.save_weights(MODEL_DIR + "un" + TRAINED_FILE)
 
 History = model.fit(X_, Y_,
                     epochs=EPOCHS,

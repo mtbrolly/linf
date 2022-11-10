@@ -21,7 +21,7 @@ tf.keras.backend.set_floatx("float64")
 N_C = 1
 DT = 4
 
-MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb/"
+MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb_flipout_Adamax/"
 
 CHECKPOINT = "trained"
 
