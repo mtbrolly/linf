@@ -5,7 +5,7 @@ Script for computing scores of MDN, DTMC and GTGP models of transition density.
 import numpy as np
 import matplotlib.pyplot as plt
 from tools import grids
-from dx.mdn_utils2 import mdn_mean_log_likelihood
+from dx.utils import mdn_mean_log_likelihood
 plt.style.use('./misc/paper.mplstyle')
 plt.ioff()
 

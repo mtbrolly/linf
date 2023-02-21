@@ -11,6 +11,7 @@ import tensorflow_probability as tfp
 import numpy as np
 import pickle
 from shapely.geometry import Point
+from dx.utils import load_mdn, load_scalers
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from tools.preprocessing import Scaler  # noqa: E402
 from tools import grids  # noqa: E402
@@ -37,65 +38,8 @@ DT = 4
 
 MODEL_DIR = (f"dx/models/GDP_{DT:.0f}day_NC{N_C}/")
 
-CHECKPOINT = "trained"
-
-print("Configuration done.")
-
-# --- PREPARE DATA ---
-
-DATA_DIR = f"data/GDP/{DT:.0f}day/"
-
-X = np.load(DATA_DIR + "X0_train.npy")
-Y = np.load(DATA_DIR + "DX_train.npy")
-
-Xws = X.copy()
-Xws[:, 0] -= 360.
-Xes = X.copy()
-Xes[:, 0] += 360.
-
-# Periodicising X0.
-X = np.concatenate((X, Xes, Xws), axis=0)
-Y = np.concatenate((Y, Y, Y), axis=0)
-
-Xscaler = Scaler(X)
-Yscaler = Scaler(Y)
-X_size = X.shape[0]
-
-del X, Y, Xws, Xes
-
-print("Data prepared.")
-
-
-# --- BUILD MODEL ---
-
-# Data attributes
-O_SIZE = len(Yscaler.mean)
-
-
-DENSITY_PARAMS_SIZE = tfpl.MixtureSameFamily.params_size(
-    N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(O_SIZE))
-
-
-def dense_layer(N, activation):
-    return tfkl.Dense(N, activation=activation)
-
-
-activation_fn = 'tanh'
-
-model = tf.keras.Sequential([
-    dense_layer(256, activation_fn),
-    dense_layer(256, activation_fn),
-    dense_layer(256, activation_fn),
-    dense_layer(256, activation_fn),
-    dense_layer(512, activation_fn),
-    dense_layer(512, activation_fn),
-    dense_layer(N_C * 6, None),
-    tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(2))]
-)
-
-
-# Load weights
-model.load_weights(MODEL_DIR + CHECKPOINT + "/weights")
+model = load_mdn(DT=DT, N_C=N_C)
+Xscaler, Yscaler = load_scalers(DT=DT, N_C=N_C)
 
 print("Model loaded.")
 

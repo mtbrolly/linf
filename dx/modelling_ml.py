@@ -4,12 +4,12 @@ Script for constructing and training MDN model of transition density.
 
 import sys
 import os
+import pickle
 from pathlib import Path
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 from tensorflow.keras import callbacks as cb
-
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 from tools.preprocessing import Scaler  # noqa: E402
 
@@ -52,32 +52,24 @@ X_ = Xscaler.standardise(X)
 Y_ = Yscaler.standardise(Y)
 del X, Y
 
+with open(MODEL_DIR + r"Xscaler.pkl", "wb") as file:
+    pickle.dump(Xscaler, file)
+
+with open(MODEL_DIR + r"Yscaler.pkl", "wb") as file:
+    pickle.dump(Yscaler, file)
+
 # --- BUILD MODEL ---
-
-O_SIZE = len(Yscaler.mean)
-
-
-DENSITY_PARAMS_SIZE = tfpl.MixtureSameFamily.params_size(
-    N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(O_SIZE)
-)
-
-
-def dense_layer(N, activation):
-    return tfkl.Dense(N, activation=activation)
-
-
-activation_fn = "tanh"
 
 mirrored_strategy = tf.distribute.MirroredStrategy()
 with mirrored_strategy.scope():
     model = tf.keras.Sequential(
-        [dense_layer(256, activation_fn),
-         dense_layer(256, activation_fn),
-         dense_layer(256, activation_fn),
-         dense_layer(256, activation_fn),
-         dense_layer(512, activation_fn),
-         dense_layer(512, activation_fn),
-         dense_layer(N_C * 6, None),
+        [tfkl.Dense(256, activation='tanh'),
+         tfkl.Dense(256, activation='tanh'),
+         tfkl.Dense(256, activation='tanh'),
+         tfkl.Dense(256, activation='tanh'),
+         tfkl.Dense(512, activation='tanh'),
+         tfkl.Dense(512, activation='tanh'),
+         tfkl.Dense(N_C * 6, activation=None),
          tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(2))])
 
 # --- TRAIN MODEL ---
