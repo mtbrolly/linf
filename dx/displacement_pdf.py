@@ -24,8 +24,7 @@ plt.ioff()
 N_C = 32
 DT = 4
 
-MODEL_DIR = (f"dx/models/GDP_{DT:.0f}day_NC{N_C}"
-             + "_ml_flipout_Adam_tanh_lr5em5_pat50_val20/")
+MODEL_DIR = (f"dx/models/GDP_{DT:.0f}day_NC{N_C}")
 
 CHECKPOINT = "trained"
 
@@ -72,8 +71,6 @@ def dense_layer(N, activation):
 
 activation_fn = 'tanh'
 
-# mirrored_strategy = tf.distribute.MirroredStrategy()
-# with mirrored_strategy.scope():
 model = tf.keras.Sequential([
     dense_layer(256, activation_fn),
     dense_layer(256, activation_fn),

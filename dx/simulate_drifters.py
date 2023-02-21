@@ -35,8 +35,7 @@ with open('./data/GDP/masks/ar6_land_poly.pkl', "rb") as poly_file:
 N_C = 32
 DT = 4
 
-MODEL_DIR = (f"dx/models/GDP_{DT:.0f}day_NC{N_C}"
-             + "_ml_flipout_Adam_tanh_lr5em5_pat50_val20/")
+MODEL_DIR = (f"dx/models/GDP_{DT:.0f}day_NC{N_C}/")
 
 CHECKPOINT = "trained"
 

@@ -13,11 +13,9 @@ plt.style.use('./misc/paper.mplstyle')
 plt.ioff()
 
 comp = 'minor'
-cov_4day = np.load("dx/models/GDP_4day_NC32"
-                   + "_ml_flipout_Adam_tanh_lr5em5_pat50_val20/" + "cov.npy")
+cov_4day = np.load("dx/models/GDP_4day_NC32/" + "cov.npy")
 
-cov_14day = np.load("dx/models/GDP_14day_NC32"
-                    + "_ml_flipout_Adam_tanh_lr5em5_pat50_val20/" + "cov.npy")
+cov_14day = np.load("dx/models/GDP_14day_NC32/" + "cov.npy")
 
 
 RES = 3.
@@ -98,8 +96,7 @@ ax.add_feature(cartopy.feature.NaturalEarthFeature(
                facecolor='k', edgecolor=None, zorder=100)
 plt.colorbar(sca, extend='both', shrink=0.8)
 plt.tight_layout()
-plt.savefig("dx/models/GDP_4day_NC32"
-            + "_ml_flipout_Adam_tanh_lr5em5_pat50_val20/"
+plt.savefig("dx/models/GDP_4day_NC32/"
             + "figures/diffs_difference_" + comp + ".png")
 
 plt.close('all')
