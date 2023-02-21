@@ -1,9 +1,7 @@
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
 import cartopy
-# import cmocean
 plt.ioff()
 plt.style.use('./misc/paper.mplstyle')
 
@@ -44,6 +42,5 @@ ax.add_feature(cartopy.feature.NaturalEarthFeature(
                facecolor='k', edgecolor=None, zorder=-11)
 plt.tight_layout()
 
-# plt.show()
 plt.savefig("figures/regions.png")
 plt.close()

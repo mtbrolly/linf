@@ -13,16 +13,13 @@ DT = 4
 MODEL_DIR = (f"dx/models/GDP_{DT:.0f}day_NC{N_C}"
              + "_ml_flipout_Adam_tanh_lr5em5_pat50_val20/")
 
-X = np.load(MODEL_DIR + "homogeneous_release_10year_rejection.npy")
+X = np.load(MODEL_DIR + "homogeneous_release_10year.npy")
 
-m = grids.GTGP(n_x=180, n_y=90)  # !!!
-legit = (X[:, -1, 1] < 90.) * (X[:, -1, 1] > -90.)
-# legit *= (X[:, -1, 0] < 180.) * (X[:, -1, 0] > -1800.)
-X0 = X[legit, -1, :]
+m = grids.GTGP(n_x=180, n_y=90)
+X0 = X[:, -1, :]
 m.count_X0s(X0, X0)
 
 
-# Plotting
 pc_data = m.count.squeeze()
 
 plt.figure(figsize=(6, 3))
@@ -51,7 +48,6 @@ ax.add_feature(cartopy.feature.NaturalEarthFeature(
 plt.colorbar(sca, extend='max')
 plt.tight_layout()
 
-# plt.show()
 plt.savefig(
     MODEL_DIR
     + "figures/homogeneous_release_10year_rejection/final_hist2.png")

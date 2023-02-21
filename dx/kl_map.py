@@ -72,8 +72,6 @@ def dense_layer(N, activation):
 
 activation_fn = 'tanh'
 
-# mirrored_strategy = tf.distribute.MirroredStrategy()
-# with mirrored_strategy.scope():
 m32 = tf.keras.Sequential([
     dense_layer(256, activation_fn),
     dense_layer(256, activation_fn),
@@ -146,8 +144,6 @@ def dense_layer(N, activation):
 
 activation_fn = 'tanh'
 
-# mirrored_strategy = tf.distribute.MirroredStrategy()
-# with mirrored_strategy.scope():
 m1 = tf.keras.Sequential([
     dense_layer(256, activation_fn),
     dense_layer(256, activation_fn),
@@ -171,28 +167,8 @@ RES = 1.  # Grid points per degree
 grid = grids.LonlatGrid(n_x=360 * RES, n_y=180 * RES)
 
 
-# def KL(X0):
-#     N = 1000
-#     DX_samples = m32(Xscaler.standardise(X0)).sample(N)
-#     p_m32 = Yscaler.invert_standardisation_prob(
-#         np.exp(m32(Xscaler.standardise(X0)).log_prob(DX_samples).numpy()))
-#     p_m1 = Yscaler.invert_standardisation_prob(
-#         np.exp(m1(Xscaler.standardise(X0)).log_prob(DX_samples).numpy()))
-#     return (np.log(p_m32) - np.log(p_m1)).mean(axis=0)
-
-
 KL_X0 = np.zeros_like(grid.centres[..., 0])
 
-# for i in range(KL_X0.shape[0]):
-#     print(i)
-#     N = 1000
-#     X0 = grid.centres[i: i + 1]
-#     DX_samples = m32(Xscaler.standardise(X0)).sample(N)
-#     p_m32 = Yscaler.invert_standardisation_prob(
-#         np.exp(m32(Xscaler.standardise(X0)).log_prob(DX_samples).numpy()))
-#     p_m1 = Yscaler.invert_standardisation_prob(
-#         np.exp(m1(Xscaler.standardise(X0)).log_prob(DX_samples).numpy()))
-#     KL_X0[i] = (np.log(p_m32) - np.log(p_m1)).mean(axis=0)
 
 for i in range(KL_X0.shape[0]):
     print(i)
@@ -205,10 +181,6 @@ for i in range(KL_X0.shape[0]):
         m1(Xscaler.standardise(X0)).log_prob(DX_samples).numpy())
     KL_X0[i] = (lp_m32 - lp_m1).mean(axis=0)
 
-# X0 = np.array([-70.5, 34.85])[None, :]
-# KL_test = KL(X0)
-
-# KL_X0 = grid.eval_on_grid(KL)
 
 np.save(MODEL_DIR + "KL.npy", KL_X0)
 
@@ -222,7 +194,6 @@ MODEL_DIR = (f"dx/models/GDP_{DT:.0f}day_NC{N_C}"
 
 plt.figure(figsize=(6, 3))
 ax = plt.axes(projection=ccrs.Robinson(central_longitude=0.))
-# ax.set_extent(lims, crs=ccrs.PlateCarree())
 ax.spines['geo'].set_visible(False)
 
 sca = ax.pcolormesh(grid.vertices[..., 0], grid.vertices[..., 1],
