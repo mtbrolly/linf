@@ -1,7 +1,3 @@
-"""
-Script for applying Chapman-Kolmogorov equation on a lon-lat grid.
-"""
-
 from pathlib import Path
 import cmocean
 import tensorflow as tf
@@ -20,22 +16,18 @@ tfpl = tfp.layers
 tfd = tfp.distributions
 kl = tfd.kullback_leibler
 tf.keras.backend.set_floatx("float64")
-plt.style.use('./misc/experiments.mplstyle')
+plt.style.use('./misc/paper.mplstyle')
 plt.ioff()
 
 
-# --- PREPARE DATA ---
-
 # Model hyperparameters
-N_C = 1
-DT = 14
+N_C = 32
+DT = 4
 
-MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb/"
+MODEL_DIR = (f"dx/models/GDP_{DT:.0f}day_NC{N_C}"
+             + "_ml_flipout_Adam_tanh_lr5em5_pat50_val20/")
 
 CHECKPOINT = "trained"
-FIG_DIR = MODEL_DIR + "figures/"
-if not Path(FIG_DIR).exists():
-    Path(FIG_DIR).mkdir(parents=True)
 
 print("Configuration done.")
 
@@ -59,7 +51,7 @@ Xscaler = Scaler(X)
 Yscaler = Scaler(Y)
 X_size = X.shape[0]
 
-del X, Y
+del X, Y, Xws, Xes
 
 print("Data prepared.")
 
@@ -69,8 +61,6 @@ print("Data prepared.")
 # Data attributes
 O_SIZE = len(Yscaler.mean)
 
-# Model hyperparameters
-N_C = 32
 
 DENSITY_PARAMS_SIZE = tfpl.MixtureSameFamily.params_size(
     N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(O_SIZE))
@@ -80,26 +70,18 @@ def dense_layer(N, activation):
     return tfkl.Dense(N, activation=activation)
 
 
-def var_layer(N, activation):
-    return tfpl.DenseFlipout(
-        N,
-        kernel_divergence_fn=(
-            lambda q, p, ignore: kl.kl_divergence(q, p) / X_size),
-        bias_divergence_fn=(
-            lambda q, p, ignore: kl.kl_divergence(q, p) / X_size),
-        activation=activation)
-
+activation_fn = 'tanh'
 
 # mirrored_strategy = tf.distribute.MirroredStrategy()
 # with mirrored_strategy.scope():
 model = tf.keras.Sequential([
-    var_layer(256, 'relu'),
-    var_layer(256, 'relu'),
-    var_layer(256, 'relu'),
-    var_layer(256, 'relu'),
-    var_layer(512, 'relu'),
-    var_layer(512, 'relu'),
-    var_layer(N_C * 6, None),
+    dense_layer(256, activation_fn),
+    dense_layer(256, activation_fn),
+    dense_layer(256, activation_fn),
+    dense_layer(256, activation_fn),
+    dense_layer(512, activation_fn),
+    dense_layer(512, activation_fn),
+    dense_layer(N_C * 6, None),
     tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(2))]
 )
 
@@ -114,7 +96,16 @@ print("Model loaded.")
 RES = 2.  # Grid points per degree
 grid = grids.LonlatGrid(n_x=360 * RES, n_y=180 * RES)
 
-X0 = np.array([-72.55, 33.67])[None, :]
+# X0 = np.array([-72.55, 33.67])[None, :]
+X0 = np.array([-74.5, 34.85])[None, :]
+lims = [-90, -55, 20, 50]
+
+# X0 = np.array([-50, 7.3])[None, :]
+# lims = [-65, -20, -5, 25]
+
+# X0 = np.array([6.9, 54.4])[None, :]
+# lims = [-15, 10, 45, 65]
+
 gm_ = model(Xscaler.standardise(X0))
 
 
@@ -127,21 +118,27 @@ def p_X1_given_X0(X1):
 
 p_X1_given_X0 = grid.eval_on_grid(p_X1_given_X0)
 
+pc_data = np.log(p_X1_given_X0)
 
-plt.figure(figsize=(6, 3))
-ax = plt.axes(projection=ccrs.Robinson(central_longitude=0.))
-# ax.gridlines(draw_labels=True, dms=True,
-#              x_inline=False, y_inline=False)
-sca = ax.pcolormesh(grid.vertices[..., 0], grid.vertices[..., 1],
-                    np.log(p_X1_given_X0),
-                    cmap=cmocean.cm.amp,
-                    shading='flat',
-                    transform=ccrs.PlateCarree(),
-                    vmin=-100)
-ax.add_feature(cartopy.feature.LAND, zorder=100, edgecolor=None,
-               facecolor='k',
-               linewidth=0.3)
-plt.colorbar(sca, extend=None, shrink=0.8)
+plt.figure(figsize=(4, 3))
+ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=0.))
+ax.set_extent(lims, crs=ccrs.PlateCarree())
+
+sca = ax.contourf(grid.centres[..., 0], grid.centres[..., 1],
+                  pc_data,
+                  levels=np.linspace(-20., pc_data.max(), 10),
+                  cmap=cmocean.cm.amp,
+                  transform=ccrs.PlateCarree())
+
+ax.plot(X0[0, 0], X0[0, 1], 'yo', markersize=3.)
+
+# ax.add_feature(cartopy.feature.NaturalEarthFeature(
+#     "physical", "land", "50m"),
+#     facecolor='k', edgecolor=None, zorder=100)
+ax.coastlines()
+plt.colorbar(sca, extend='min')
 plt.tight_layout()
-plt.show()
-plt.savefig(FIG_DIR + "cond" + ".png", dpi=576)
+# plt.show()
+plt.savefig(MODEL_DIR + "figures/cond_gulf_stream2.png")
+# plt.savefig(MODEL_DIR + "figures/cond_brazil.png")
+plt.close()

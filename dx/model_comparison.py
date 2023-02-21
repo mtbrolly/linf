@@ -1,74 +1,135 @@
 """
-Gridded Gaussian model.
+Script for computing scores of MDN, DTMC and GTGP models of transition density.
 """
+
 import numpy as np
-import tensorflow as tf
-import pickle
-
-# Load model.
-with open('models/ggm_5degree_ct3/ggm.pickle', 'rb') as f:
-    m = pickle.load(f)
-
-
-# Load data and scalers.
-data_dir = "models/eddie0205_bs8192_lr5em4/"
-datas = []
-datas_str = ["X", "XVAL", "Y", "YVAL", "X_", "X_VAL", "Y_", "Y_VAL"]
-for i in range(len(datas_str)):
-    datas.append(np.load(data_dir + datas_str[i] + '.npy'))
-[X, XVAL, Y, YVAL, X_, X_VAL, Y_, Y_VAL] = datas
+import matplotlib.pyplot as plt
+from tools import grids
+from dx.mdn_utils2 import mdn_mean_log_likelihood
+plt.style.use('./misc/paper.mplstyle')
+plt.ioff()
 
 
-tf.keras.backend.set_floatx('float64')
-ml_model_dir = "models/eddie0205_bs8192_lr5em4/"
-# trained_model_file = ml_model_dir + "trained_nn"
-trained_model_file = ml_model_dir + "checkpoint_nn_20_4475.83"
+# Load data and choose a subset.
 
-scalers = []
-scalers_str = ["Xscaler", "Yscaler"]
-for i in range(len(scalers_str)):
-    with open(ml_model_dir + scalers_str[i] + '.pickle', 'rb') as f:
-        scalers.append(pickle.load(f))
+DT = 4.
+DATA_DIR = f"data/GDP/{DT:.0f}day/"
 
-[Xscaler, Yscaler] = scalers
+# Set region limits.
 
-# Load neural network and Gaussian mixture layer.
-with open(ml_model_dir + 'gm.pickle', 'rb') as f:
-    gm = pickle.load(f)
-NN = tf.keras.models.load_model(trained_model_file,
-                                custom_objects={'nll_reg': gm.nll_reg})
-gm.neural_net = NN
+global_ = np.array([[-180., 180.], [-90., 90.]])
+A = np.array([[-50., -20.], [30., 50.]])
+B = np.array([[145., 175.], [20., 40.]])
+C = np.array([[-130., -100.], [-10., 10.]])
 
-# Calculate log Bayes factor for MDN model (eddie2004) against GGM.
-# With 45 degree GGM:
-# Training data: log K = 384517 = (-20782) - (-405300)
-# Testing data:  log K = 343547 = (-75743) - (-419290)
-# With 5 degree GGM filling poorly sampled cells with global averages:
-# Training data: log K = 15603 = (-20782) - (-36385)
-# Testing data:  log K = -7803 = (-75743) - (-67940)
-# With 1 degree GGM filling poorly sampled cells with global averages:
-# Training data: log K = -189526 = (-20782) - (168743)
-# Testing data:  log K = 88362 = (-75743) - (-164106)
-# With 10 degree GGM filling poorly sampled cells with global averages:
-# Training data: log K = 104566 = (-20782) - (-125348)
-# Testing data:  log K = 67855 = (-75743) - (-143598)
+region = B
 
-# Calculate log Bayes factor for MDN model eddie0205_bs8192_lr5em4 against GGM.
-# With 5 degree GGM filling poorly sampled cells with global averages:
-# Training data: log K =  = () - ()
-# Testing data:  log K =  = () - ()
+X0 = np.load(DATA_DIR + "X0_train.npy")
+DX = np.load(DATA_DIR + "DX_train.npy")
+
+# Get X1 from DX.
+X1 = X0.copy() + DX.copy()
+X1[(X1 > 180)[:, 0], 0] -= 360.
+X1[(X1 < -180)[:, 0], 0] += 360.
+
+# Extract subset.
+
+subset_lon_0 = np.logical_and(X0[:, 0] > region[0, 0], X0[:, 0] < region[0, 1])
+subset_lat_0 = np.logical_and(X0[:, 1] > region[1, 0], X0[:, 1] < region[1, 1])
+
+subset_lon_1 = np.logical_and(X1[:, 0] > region[0, 0], X1[:, 0] < region[0, 1])
+subset_lat_1 = np.logical_and(X1[:, 1] > region[1, 0], X1[:, 1] < region[1, 1])
+
+subset = np.logical_and(
+    np.logical_and(
+        np.logical_and(
+            subset_lon_0, subset_lat_0), subset_lon_1), subset_lat_1)
+
+X0 = X0[subset]
+DX = DX[subset]
 
 
-# Evaluate MDN
-ml_nll_ = NN.evaluate(x=X_, y=Y_, batch_size=X_.shape[0])
-ml_log_likelihood = -ml_nll_ - X_.shape[0] * np.log(Yscaler.std.prod())
+X0val = np.load(DATA_DIR + "X0_test.npy")
+DXval = np.load(DATA_DIR + "DX_test.npy")
 
-# Evaluate GGM
-log_likelihood = m.log_likelihood(XVAL, YVAL)
-mean_point_nll = -log_likelihood / X.shape[0]
+# Get X1val from DXval.
+X1val = X0val.copy() + DXval.copy()
+X1val[(X1val > 180)[:, 0], 0] -= 360.
+X1val[(X1val < -180)[:, 0], 0] += 360.
 
-# Calculate Bayes factor
-lnK = ml_log_likelihood - log_likelihood
+subset_lon_0_val = np.logical_and(X0val[:, 0] > region[0, 0],
+                                  X0val[:, 0] < region[0, 1])
+subset_lat_0_val = np.logical_and(X0val[:, 1] > region[1, 0],
+                                  X0val[:, 1] < region[1, 1])
 
-# Check against globally constant Gaussian model
-# log_likelihood_global = m.log_likelihood_based_on_global_averages(Y)
+subset_lon_1_val = np.logical_and(X1val[:, 0] > region[0, 0],
+                                  X1val[:, 0] < region[0, 1])
+subset_lat_1_val = np.logical_and(X1val[:, 1] > region[1, 0],
+                                  X1val[:, 1] < region[1, 1])
+
+subset_val = np.logical_and(
+    np.logical_and(
+        np.logical_and(
+            subset_lon_0_val,
+            subset_lat_0_val),
+        subset_lon_1_val),
+    subset_lat_1_val)
+
+X0val = X0val[subset_val]
+DXval = np.load(DATA_DIR + "DX_test.npy")[subset_val]
+
+del X1, X1val
+
+
+# Compute model scores.
+
+
+def DTMC_score(res):
+    DTMC = grids.DTMC(n_x=int(np.ceil((region[0, 1] - region[0, 0]) / res)),
+                      n_y=int(np.ceil((region[1, 1] - region[1, 0]) / res)),
+                      xlims=region[0], ylims=region[1])
+    DTMC.fit(X0, DX)
+    return (DTMC.mean_log_likelihood(X0, DX),
+            DTMC.mean_log_likelihood(X0val, DXval))
+
+
+ress = np.arange(5., 15.)  # Global GTGP (7 gives best val. sco.)
+# ress = [45., 60., 90., 180.]  # Global DTMC (only 180 gives finite val. sco.)
+
+# ress = np.logspace(np.log10(.25), np.log10(20), 15)  # A
+
+# ress = np.logspace(np.log10(.25), np.log10(20), 15)  # B (DTMC:10, GTGP:2.5)
+
+# ress = np.logspace(np.log10(1.5), np.log10(20), 12)  # C (DTMC:10)
+# ress = np.logspace(np.log10(1.5), np.log10(6), 12)  # C (GTGP:4.11)
+
+
+DTMC_mll = []
+for i in range(len(ress)):
+    DTMC_mll.append(DTMC_score(ress[i]))
+    print(i + 1)
+
+DTMC_mll = np.array(DTMC_mll)
+
+
+def GTGP_score(res):
+    GTGP = grids.GTGP(n_x=int(np.ceil((region[0, 1] - region[0, 0]) / res)),
+                      n_y=int(np.ceil((region[1, 1] - region[1, 0]) / res)),
+                      xlims=region[0], ylims=region[1])
+    GTGP.fit(X0, DX)
+    return (GTGP.mean_log_likelihood(X0, DX),
+            GTGP.mean_log_likelihood(X0val, DXval))
+
+
+GTGP_mll = []
+for i in range(len(ress)):
+    GTGP_mll.append(GTGP_score(ress[i]))
+    print(i + 1)
+    print(GTGP_mll[-1])
+
+GTGP_mll = np.array(GTGP_mll)
+
+
+MDN_mll = mdn_mean_log_likelihood(X0val, DXval,
+                                  DT, 32,
+                                  block_size=40000)

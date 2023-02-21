@@ -3,7 +3,7 @@
 #SBATCH --partition=gpu-cascade
 #SBATCH --qos=gpu
 #SBATCH --gres=gpu:4
-#SBATCH --time=23:59:00
+#SBATCH --time=95:59:00
 #SBATCH --account=sc073
 
 # Job commands

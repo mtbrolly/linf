@@ -10,20 +10,25 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 from tensorflow.keras import callbacks as cb
+from tensorflow_probability.python.bijectors import fill_scale_tril
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from tools.preprocessing import Scaler  # noqa: E402
+
 
 tfkl = tf.keras.layers
 tfpl = tfp.layers
 tfd = tfp.distributions
+tfa = tf.keras.activations
+tfb = tfp.bijectors
 kl = tfd.kullback_leibler
 tf.keras.backend.set_floatx("float64")
 
 # Model hyperparameters
 N_C = 1
 DT = 4
+MIXTURE_DENSITY = 'gaussian_mixture'
 
-MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb_flipout_Adamax/"
+MODEL_DIR = f"dx/models/GDP_{DT:.0f}day_NC{N_C}_vb_flipout_Adam_tanh_lr5em5/"
 
 if not Path(MODEL_DIR).exists():
     Path(MODEL_DIR).mkdir(parents=True)
@@ -58,8 +63,25 @@ del X, Y
 O_SIZE = len(Yscaler.mean)
 
 
-DENSITY_PARAMS_SIZE = tfpl.MixtureSameFamily.params_size(
-    N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(O_SIZE))
+if MIXTURE_DENSITY == 'gaussian_mixture':
+    DENSITY_PARAMS_SIZE = int(tfpl.MixtureSameFamily.params_size(
+        N_C, component_params_size=tfpl.MultivariateNormalTriL.params_size(
+            O_SIZE)))
+    mixture_density_layer = tfpl.MixtureSameFamily(
+        N_C, tfpl.MultivariateNormalTriL(O_SIZE))
+
+elif MIXTURE_DENSITY == 'single_student_t':
+    DENSITY_PARAMS_SIZE = 1 + O_SIZE + O_SIZE * (O_SIZE + 1) // 2
+
+    mixture_density_layer = tfpl.DistributionLambda(
+        lambda t: tfd.MultivariateStudentTLinearOperator(
+            df=4. + tfa.exponential(t[..., 0]),
+            loc=t[..., 1:1 + O_SIZE],
+            scale=tf.linalg.LinearOperatorLowerTriangular(
+                fill_scale_tril.FillScaleTriL(
+                    diag_shift=np.array(1e-5, t.dtype.as_numpy_dtype),
+                    validate_args=True)(t[..., 1 + O_SIZE:]))
+            ))
 
 
 def dense_layer(N, activation):
@@ -69,7 +91,7 @@ def dense_layer(N, activation):
 def var_layer(N, activation):
     return tfpl.DenseFlipout(
         N,
-        bias_posterior_fn=tfp.python.layers.util.default_mean_field_normal_fn(
+        bias_posterior_fn=tfpl.util.default_mean_field_normal_fn(
             ),
         bias_prior_fn=tfp.layers.default_multivariate_normal_fn,
         kernel_divergence_fn=(
@@ -79,17 +101,19 @@ def var_layer(N, activation):
         activation=activation)
 
 
+activation_fn = 'tanh'
+
 mirrored_strategy = tf.distribute.MirroredStrategy()
 with mirrored_strategy.scope():
     model = tf.keras.Sequential([
-        var_layer(256, 'relu'),
-        var_layer(256, 'relu'),
-        var_layer(256, 'relu'),
-        var_layer(256, 'relu'),
-        var_layer(512, 'relu'),
-        var_layer(512, 'relu'),
-        var_layer(N_C * 6, None),
-        tfpl.MixtureSameFamily(N_C, tfpl.MultivariateNormalTriL(2))]
+        var_layer(256, activation_fn),
+        var_layer(256, activation_fn),
+        var_layer(256, activation_fn),
+        var_layer(256, activation_fn),
+        var_layer(512, activation_fn),
+        var_layer(512, activation_fn),
+        var_layer(DENSITY_PARAMS_SIZE, None),
+        mixture_density_layer]
     )
 
 # --- TRAIN MODEL ---
@@ -110,7 +134,7 @@ LOSS = nll
 BATCH_SIZE = 8192
 LEARNING_RATE = 5e-5
 EPOCHS = 1000
-OPTIMISER = tf.keras.optimizers.Adamax(learning_rate=LEARNING_RATE)
+OPTIMISER = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
 VALIDATION_SPLIT = 0
 
 # Callbacks
@@ -118,7 +142,7 @@ CSV_LOGGER = cb.CSVLogger(MODEL_DIR + LOG_FILE)
 BATCHES_PER_EPOCH = int(np.ceil(X_.shape[0] / BATCH_SIZE
                                 * (1 - VALIDATION_SPLIT)))
 CHECKPOINTING = cb.ModelCheckpoint(MODEL_DIR + CHECKPOINT_FILE,
-                                   save_freq=1 * BATCHES_PER_EPOCH,
+                                   save_freq=10 * BATCHES_PER_EPOCH,
                                    verbose=1,
                                    save_weights_only=True)
 EARLY_STOPPING = cb.EarlyStopping(monitor='loss', patience=20, min_delta=0.)

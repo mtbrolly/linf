@@ -1,0 +1,5 @@
+font.size : 10
+text.usetex : True
+figure.figsize: 3.0, 2.25
+lines.linewidth: 1.0
+figure.dpi : 300
